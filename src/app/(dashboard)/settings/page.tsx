@@ -155,7 +155,7 @@ export default function SettingsPage() {
     try {
       const { data, error } = await sb
         .from("organizations")
-        .select("id, name, created_at") // timezone removed
+        .select("id, name, created_at")
         .eq("id", orgId)
         .maybeSingle();
 
@@ -215,7 +215,6 @@ export default function SettingsPage() {
   const loadPositions = React.useCallback(async () => {
     if (!orgId) return;
     try {
-      // Using related count via PostgREST relation (positions -> shifts by position_id)
       const { data, error } = await sb
         .from("positions")
         .select(
@@ -247,7 +246,6 @@ export default function SettingsPage() {
   const loadLocations = React.useCallback(async () => {
     if (!orgId) return;
     try {
-      // Using related count via PostgREST relation (locations -> shifts by location_id)
       const { data, error } = await sb
         .from("locations")
         .select(
@@ -438,7 +436,7 @@ export default function SettingsPage() {
   async function deletePosition(id: string) {
     if (!canManage) return;
     const position = positions.find((p) => p.id === id);
-    if (position?.shift_count && position.shift_count > 0) {
+    if ((position?.shift_count ?? 0) > 0) {
       toast.error("Cannot delete a position with assigned shifts");
       return;
     }
@@ -492,7 +490,7 @@ export default function SettingsPage() {
   async function deleteLocation(id: string) {
     if (!canManage) return;
     const location = locations.find((l) => l.id === id);
-    if (location?.shift_count && location.shift_count > 0) {
+    if ((location?.shift_count ?? 0) > 0) {
       toast.error("Cannot delete a location with assigned shifts");
       return;
     }
@@ -525,6 +523,9 @@ export default function SettingsPage() {
         const status = getCodeStatus(code);
         return status.text !== "Expired" && status.text !== "Inactive";
       });
+
+  // Ensures we always return a strict boolean
+  const hasAssignedShifts = (count?: number) => (count ?? 0) > 0;
 
   /* ============== Rendering ============== */
 
@@ -925,6 +926,7 @@ export default function SettingsPage() {
                                       className="gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
                                     >
                                       <Trash2 className="h-3 w-3" />
+                                      Delete
                                     </Button>
                                   </>
                                 )}
@@ -1068,7 +1070,7 @@ export default function SettingsPage() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => deletePosition(position.id)}
-                                disabled={deletingPosId === position.id || (position.shift_count && position.shift_count > 0)}
+                                disabled={deletingPosId === position.id || hasAssignedShifts(position.shift_count)}
                                 className="gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
                               >
                                 {deletingPosId === position.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
@@ -1173,7 +1175,7 @@ export default function SettingsPage() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => deleteLocation(location.id)}
-                                disabled={deletingLocId === location.id || (location.shift_count && location.shift_count > 0)}
+                                disabled={deletingLocId === location.id || hasAssignedShifts(location.shift_count)}
                                 className="gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
                               >
                                 {deletingLocId === location.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
