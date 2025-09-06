@@ -820,9 +820,10 @@ export default function SchedulePage() {
               Filter
             </Button>
           </div>
+          </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-4">
             <Button
               variant="outline"
               size="sm"
@@ -852,7 +853,8 @@ export default function SchedulePage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
+            <div className="ml-auto">
+              
             {canManage && (
               <Button
                 size="sm"
@@ -866,8 +868,9 @@ export default function SchedulePage() {
                 Add Shift
               </Button>
             )}
+            </div>
           </div>
-        </div>
+        
 
         {/* Main Schedule Grid with Drag & Drop */}
         <DndContext
