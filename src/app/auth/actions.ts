@@ -4,6 +4,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabaseServer";
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
@@ -14,9 +16,9 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
     // Your /login page can read ?error= and show a Sonner toast
-    redirect("/auth/login?error=" + encodeURIComponent(error.message || "Login failed"));
+   toast.error(error.message || "Login failed");
+    redirect("/auth/login");
   }
-
   // Check memberships
   const { data: memberships, error: memErr } = await supabase
     .from("memberships")
@@ -45,10 +47,12 @@ export async function signup(formData: FormData) {
   const confirm = String(formData.get("confirm") || "");
 
   if (!email || !password) {
-    redirect("/auth/signup?error=" + encodeURIComponent("Email and password are required."));
+    toast.error("Email and password are required.");
+    redirect("/auth/signup");
   }
   if (password !== confirm) {
-    redirect("/auth/signup?error=" + encodeURIComponent("Passwords do not match."));
+    toast.error("Passwords do not match.");
+    redirect("/auth/signup");
   }
 
   // Include full_name in user metadata so your profile trigger can pick it up
@@ -59,7 +63,8 @@ export async function signup(formData: FormData) {
   });
 
   if (error) {
-    redirect("/auth/signup?error=" + encodeURIComponent(error.message || "Sign up failed"));
+    toast.error(error.message || "Sign up failed");
+    redirect("/auth/signup");
   }
 
   // If email confirmation is required, there's no session yet—send to check email
