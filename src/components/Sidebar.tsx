@@ -16,6 +16,7 @@ import {
   HelpCircle,
   Menu,
   Radio,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -33,6 +34,7 @@ const NAV_MAIN = [
 ];
 
 const NAV_GENERAL = [
+  { href: "/docs", label: "Documentation", icon: BookOpen },
   { href: "/news", label: "News Feed", icon: Newspaper },
   { href: "/settings/codes", label: "Join Codes", icon: Settings },
   { href: "/help", label: "Help & Support", icon: HelpCircle },

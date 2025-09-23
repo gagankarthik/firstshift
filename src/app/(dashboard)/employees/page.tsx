@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { EmployeeHelpButton } from "@/components/ui/help-button";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -216,7 +217,10 @@ export default function EmployeesPage() {
     <div className="space-y-4">
       {/* Header / toolbar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-semibold">Employees</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-semibold">Employees</h1>
+          <EmployeeHelpButton variant="icon" size="sm" />
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <Input
             placeholder="Search by name…"
