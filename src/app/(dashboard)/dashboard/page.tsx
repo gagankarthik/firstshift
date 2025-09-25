@@ -1,1374 +1,560 @@
-// app/(dashboard)/page.tsx
 "use client";
 
 import * as React from "react";
 import { createClient } from "@/lib/supabaseClient";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import {
-  Users2,
-  Clock3,
-  CalendarDays,
-  ChevronRight,
-  Loader2,
-  Check,
-  X,
-  RefreshCw,
-  Radio,
-  TrendingUp,
-  TrendingDown,
-  AlertTriangle,
-  UserCheck,
-  UserX,
-  Calendar,
-  Clock,
-  MapPin,
-  ArrowLeft,
-  ArrowRight,
-  Star,
-  Activity,
-  Target,
-  BarChart3,
-  Plus,
-} from "lucide-react";
-import {
-  addDays,
-  startOfWeek,
-  endOfWeek,
-  format,
-  differenceInMinutes,
-  isToday,
-  isTomorrow,
-  isYesterday,
-  startOfDay,
-  endOfDay,
-  subWeeks,
-} from "date-fns";
 import { useOrg } from "@/components/providers/OrgProvider";
 import { usePermissions } from "@/app/hooks/usePermissions";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { format, startOfWeek, endOfWeek, addDays, isToday, isTomorrow } from "date-fns";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Calendar,
+  Clock,
+  Users,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  RefreshCw,
+  Plus,
+  MapPin,
+  CheckCircle,
+  AlertCircle,
+  Coffee,
+  ArrowRight,
+} from "lucide-react";
 
-/* ==== Enhanced Types ==== */
-type Position = { id: string; name: string; color: string | null };
-type Location = { id: string; name: string };
-type EmployeeLite = {
-  id: string;
-  full_name: string;
-  avatar_url: string | null;
-  position?: Position | null;
-};
-
+// Types
 type Shift = {
   id: string;
   employee_id: string | null;
-  position_id: string | null;
-  location_id: string | null;
   starts_at: string;
   ends_at: string;
-  break_minutes: number | null;
-  status: "scheduled" | "published" | "completed" | "cancelled";
-  positions?: Position | null;
-  employees?: EmployeeLite | null;
-  locations?: Location | null;
+  positions?: { name: string; color?: string | null } | { name: string; color?: string | null }[] | null;
+  locations?: { name: string } | { name: string }[] | null;
+  employees?: { full_name: string } | { full_name: string }[] | null;
 };
 
-type TimeOff = {
+type EmployeeLite = {
   id: string;
-  employee_id: string;
-  starts_at: string;
-  ends_at: string;
-  type: "vacation" | "sick" | "unpaid" | "other";
-  reason: string | null;
-  status: "pending" | "approved" | "denied";
-  employees?: EmployeeLite | null;
+  full_name: string;
+  role: string;
 };
 
-type DashboardStats = {
-  totalEmployees: number;
-  weekHours: number;
-  openShifts: number;
-  pendingTimeOff: number;
-  completionRate: number;
-  avgShiftLength: number;
-  mostActiveEmployee: string | null;
-  busyDays: string[];
-};
-
-// Normalization helpers
-type MaybeArray<T> = T | T[] | null | undefined;
-function pickOne<T>(v: MaybeArray<T>): T | null {
-  return Array.isArray(v) ? v[0] ?? null : v ?? null;
-}
-
-function hoursBetween(startIso: string, endIso: string, breakMin: number | null) {
-  const mins = differenceInMinutes(new Date(endIso), new Date(startIso));
-  const net = Math.max(0, mins - (breakMin || 0));
-  return +(net / 60).toFixed(2);
-}
-
-function getTimeOfDay() {
+function getGreeting(name?: string) {
   const hour = new Date().getHours();
-  if (hour < 12) return "morning";
-  if (hour < 17) return "afternoon";
-  return "evening";
+  const timeGreeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  return name ? `${timeGreeting}, ${name}` : timeGreeting;
 }
 
-/* ==== UI Components ==== */
-
-function EmployeeAvatar({
-  employee,
-  size = "md",
-  showStatus = false,
-}: {
-  employee: EmployeeLite;
-  size?: "xs" | "sm" | "md" | "lg";
-  showStatus?: boolean;
-}) {
-  const sizeClasses = {
-    xs: "h-4 w-4",
-    sm: "h-6 w-6",
-    md: "h-8 w-8",
-    lg: "h-10 w-10",
-  };
-
-  const textSizes = {
-    xs: "text-[8px]",
-    sm: "text-xs",
-    md: "text-sm",
-    lg: "text-base",
-  };
-
-  const initials = employee.full_name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-
-  return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-full flex items-center justify-center",
-        sizeClasses[size]
-      )}
-    >
-      {employee.avatar_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={employee.avatar_url} alt={employee.full_name} className="h-full w-full object-cover" />
-      ) : (
-        <div className="h-full w-full bg-gradient-to-br from-blue-100 to-purple-200 flex items-center justify-center">
-          <span className={cn("font-medium text-blue-700", textSizes[size])}>{initials}</span>
-        </div>
-      )}
-      {showStatus && (
-        <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-400" />
-      )}
-      {employee.position?.color && (
-        <div
-          className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border border-white"
-          style={{ backgroundColor: employee.position.color }}
-          title={employee.position.name}
-        />
-      )}
-    </div>
+function TrendIcon({ trend, value }: { trend: "up" | "down" | "neutral"; value: number }) {
+  if (trend === "neutral") return <Minus className="h-4 w-4 text-gray-400" />;
+  return trend === "up" ? (
+    <TrendingUp className="h-4 w-4 text-green-500" />
+  ) : (
+    <TrendingDown className="h-4 w-4 text-red-500" />
   );
 }
 
-function StatCard({
-  icon,
-  title,
-  value,
-  subtitle,
-  trend,
-  trendValue,
-  gradient = "from-blue-500 to-purple-600",
-  onClick,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  value: string | number;
-  subtitle?: string;
-  trend?: "up" | "down" | "neutral";
-  trendValue?: string;
-  gradient?: string;
-  onClick?: () => void;
-}) {
-  const TrendIcon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Activity;
-  const trendColor = trend === "up" ? "text-green-600" : trend === "down" ? "text-red-600" : "text-gray-500";
-
-  return (
-    <Card
-      className={cn(
-        "relative overflow-hidden transition-all duration-200 hover:shadow-lg",
-        onClick && "cursor-pointer hover:scale-[1.02]"
-      )}
-      onClick={onClick}
-    >
-      <div className="p-4 sm:p-5 md:p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 space-y-1.5">
-            <div className="text-xs sm:text-sm font-medium text-gray-600 truncate">{title}</div>
-            <div className="text-2xl sm:text-3xl font-bold text-gray-900">{value}</div>
-            {subtitle && <div className="text-xs text-gray-500">{subtitle}</div>}
-            {trend && trendValue && (
-              <div className={cn("flex items-center gap-1 text-xs font-medium", trendColor)}>
-                <TrendIcon className="h-3.5 w-3.5" />
-                {trendValue} vs last week
-              </div>
-            )}
-          </div>
-          <div className={cn("rounded-xl p-3 bg-gradient-to-br text-white", gradient)}>{icon}</div>
-        </div>
-      </div>
-      <div className={cn("absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r", gradient)} />
-    </Card>
-  );
-}
-
-function CoverageChart({
-  coverage,
-  target,
-}: {
-  coverage: Array<{ date: Date; count: number; bar: number }>;
-  target: number;
-}) {
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
-        {coverage.map(({ date, count, bar }) => {
-          const isT = isToday(date);
-          const isTm = isTomorrow(date);
-          const isY = isYesterday(date);
-
-          let dayLabel = format(date, "EEE");
-          if (isT) dayLabel = "Today";
-          else if (isTm) dayLabel = "Tomorrow";
-          else if (isY) dayLabel = "Yesterday";
-
-          const pct = Math.min(100, (count / target) * 100);
-          const well = pct >= 80;
-          const under = pct < 50;
-
-          return (
-            <div
-              key={+date}
-              className={cn(
-                "rounded-xl border p-3 transition-all duration-200",
-                isT ? "ring-2 ring-blue-200 bg-blue-50/60" : "bg-white hover:shadow-sm"
-              )}
-            >
-              <div className="text-center">
-                <div className={cn("text-xs font-medium", isT ? "text-blue-700" : "text-gray-700")}>{dayLabel}</div>
-                <div className="text-[11px] text-gray-500 mt-0.5">{format(date, "MMM d")}</div>
-              </div>
-
-              <div className="mt-3 text-center">
-                <div
-                  className={cn(
-                    "text-xl font-bold",
-                    well ? "text-green-600" : under ? "text-red-600" : "text-amber-600"
-                  )}
-                >
-                  {count}
-                </div>
-                <div className="text-[11px] text-gray-500">shifts</div>
-              </div>
-
-              <div className="mt-3">
-                <Progress value={pct} className="h-2" />
-                <div className="mt-1 text-center text-[11px] text-gray-500">{Math.round(pct)}%</div>
-              </div>
-
-              {under && (
-                <div className="mt-2 flex justify-center">
-                  <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function QuickActionCard({
-  title,
-  description,
-  icon,
-  action,
-  href,
-  variant = "default",
-}: {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  action: string;
-  href: string;
-  variant?: "default" | "primary" | "success" | "warning";
-}) {
-  const variants = {
-    default: "from-gray-50 to-white border-gray-200 hover:from-gray-100",
-    primary: "from-blue-50 to-indigo-50 border-blue-200 hover:from-blue-100",
-    success: "from-green-50 to-emerald-50 border-green-200 hover:from-green-100",
-    warning: "from-amber-50 to-orange-50 border-amber-200 hover:from-amber-100",
-  };
-
-  return (
-    <Card
-      className={cn(
-        "p-4 transition-all duration-200 hover:shadow-md cursor-pointer bg-gradient-to-br border",
-        variants[variant]
-      )}
-    >
-      <a href={href} className="block">
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 rounded-lg p-2 bg-white/90 shadow-sm">{icon}</div>
-          <div className="min-w-0 flex-1">
-            <div className="font-semibold text-gray-900">{title}</div>
-            <div className="text-sm text-gray-600 mt-1">{description}</div>
-            <div className="flex items-center gap-1 mt-2 text-xs font-medium text-blue-600">
-              {action} <ChevronRight className="h-3 w-3" />
-            </div>
-          </div>
-        </div>
-      </a>
-    </Card>
-  );
-}
-
-/* ===================== Main Dashboard ===================== */
 export default function DashboardPage() {
   const sb = React.useMemo(() => createClient(), []);
-  const { orgId, role, loading } = useOrg();
+  const { orgId, role, loading: orgLoading } = useOrg();
   const perms = usePermissions(role);
 
+  const [userId, setUserId] = React.useState<string | null>(null);
+  const [userEmail, setUserEmail] = React.useState<string | null>(null);
   const [weekStart, setWeekStart] = React.useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
-  const [lastWeekStart] = React.useState(startOfWeek(subWeeks(new Date(), 1), { weekStartsOn: 1 }));
-
-  const weekEnd = React.useMemo(() => endOfWeek(weekStart, { weekStartsOn: 1 }), [weekStart]);
-  const weekDays = React.useMemo(() => [...Array(7)].map((_, i) => addDays(weekStart, i)), [weekStart]);
-
-  const [busy, setBusy] = React.useState(true);
-  const [lastUpdate, setLastUpdate] = React.useState<Date>(new Date());
-  const [stats, setStats] = React.useState<DashboardStats>({
-    totalEmployees: 0,
-    weekHours: 0,
-    openShifts: 0,
-    pendingTimeOff: 0,
-    completionRate: 0,
-    avgShiftLength: 0,
-    mostActiveEmployee: null,
-    busyDays: [],
-  });
-
   const [shifts, setShifts] = React.useState<Shift[]>([]);
-  const [lastWeekShifts, setLastWeekShifts] = React.useState<Shift[]>([]);
-  const [pendingTO, setPendingTO] = React.useState<TimeOff[]>([]);
-  const [upcoming, setUpcoming] = React.useState<Shift[]>([]);
   const [todayShifts, setTodayShifts] = React.useState<Shift[]>([]);
   const [employees, setEmployees] = React.useState<EmployeeLite[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [lastUpdate, setLastUpdate] = React.useState(new Date());
 
-  const TARGET_SHIFTS_PER_DAY = 8;
+  const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+  const isAdmin = perms.canManageSchedule;
 
-  // Real-time auto-refresh
+  // Get user ID and email
   React.useEffect(() => {
-    const interval = setInterval(() => {
-      if (!busy) void load();
-    }, 30000);
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [busy, orgId, weekStart]);
+    (async () => {
+      const { data: { user } } = await sb.auth.getUser();
+      setUserId(user?.id ?? null);
+      setUserEmail(user?.email ?? null);
+    })();
+  }, [sb]);
 
-  async function load() {
+  // Load data - Fixed to prevent infinite loops
+  const loadData = React.useCallback(async () => {
     if (!orgId) return;
-    setBusy(true);
-    setLastUpdate(new Date());
+    setLoading(true);
 
     try {
-      const [employeesRes, currentWeekRes, lastWeekRes, upcomingRes, todayRes, timeOffRes] = await Promise.all([
-        sb
-          .from("employees")
-          .select("id, full_name, avatar_url, positions:position_id(id,name,color)")
-          .eq("org_id", orgId)
-          .order("full_name"),
+      const today = new Date();
+      const todayStr = format(today, "yyyy-MM-dd");
 
-        sb
-          .from("shifts")
-          .select(
-            `
-            id, employee_id, position_id, location_id, starts_at, ends_at, break_minutes, status,
-            positions:position_id(id,name,color),
-            employees:employee_id(id,full_name,avatar_url),
-            locations:location_id(id,name)
-          `
-          )
-          .eq("org_id", orgId)
-          .gte("starts_at", weekStart.toISOString())
-          .lt("starts_at", weekEnd.toISOString())
-          .order("starts_at"),
+      // Load shifts for current week
+      const { data: weekShifts } = await sb
+        .from("shifts")
+        .select(`
+          id, employee_id, starts_at, ends_at,
+          employees:employee_id(full_name),
+          positions:position_id(name, color),
+          locations:location_id(name)
+        `)
+        .eq("org_id", orgId)
+        .gte("starts_at", weekStart.toISOString())
+        .lte("starts_at", weekEnd.toISOString())
+        .order("starts_at");
 
-        sb
-          .from("shifts")
-          .select("id, starts_at, ends_at, break_minutes, employee_id")
-          .eq("org_id", orgId)
-          .gte("starts_at", lastWeekStart.toISOString())
-          .lt("starts_at", startOfWeek(weekStart, { weekStartsOn: 1 }).toISOString()),
+      // Load today's shifts
+      const { data: todayShiftsData } = await sb
+        .from("shifts")
+        .select(`
+          id, employee_id, starts_at, ends_at,
+          employees:employee_id(full_name),
+          positions:position_id(name, color),
+          locations:location_id(name)
+        `)
+        .eq("org_id", orgId)
+        .gte("starts_at", `${todayStr}T00:00:00`)
+        .lt("starts_at", `${todayStr}T23:59:59`)
+        .order("starts_at");
 
-        sb
-          .from("shifts")
-          .select(
-            `
-            id, employee_id, starts_at, ends_at, break_minutes, status,
-            positions:position_id(id,name,color),
-            employees:employee_id(id,full_name,avatar_url),
-            locations:location_id(id,name)
-          `
-          )
-          .eq("org_id", orgId)
-          .gte("starts_at", new Date().toISOString())
-          .order("starts_at", { ascending: true })
-          .limit(10),
+      // Load employees
+      const { data: employeesData } = await sb
+        .from("employees")
+        .select("id, full_name, role")
+        .eq("org_id", orgId);
 
-        sb
-          .from("shifts")
-          .select(
-            `
-            id, employee_id, starts_at, ends_at, status,
-            positions:position_id(id,name,color),
-            employees:employee_id(id,full_name,avatar_url)
-          `
-          )
-          .eq("org_id", orgId)
-          .gte("starts_at", startOfDay(new Date()).toISOString())
-          .lt("starts_at", endOfDay(new Date()).toISOString())
-          .order("starts_at"),
-
-        sb
-          .from("time_off")
-          .select(
-            `
-            id, employee_id, starts_at, ends_at, type, reason, status,
-            employees:employee_id(id,full_name,avatar_url)
-          `
-          )
-          .eq("org_id", orgId)
-          .eq("status", "pending")
-          .order("starts_at", { ascending: true })
-          .limit(15),
-      ]);
-
-      const employeesData = (employeesRes.data || []).map((e: any) => ({
-        id: e.id,
-        full_name: e.full_name,
-        avatar_url: e.avatar_url,
-        position: pickOne(e.positions),
-      }));
-      setEmployees(employeesData);
-
-      const processShifts = (data: any[]): Shift[] =>
-        (data || []).map((r: any) => ({
-          id: r.id,
-          employee_id: r.employee_id,
-          position_id: r.position_id,
-          location_id: r.location_id,
-          starts_at: r.starts_at,
-          ends_at: r.ends_at,
-          break_minutes: r.break_minutes,
-          status: r.status,
-          positions: pickOne(r.positions),
-          employees: pickOne(r.employees),
-          locations: pickOne(r.locations),
-        }));
-
-      const currentShifts = processShifts(currentWeekRes.data || []);
-      const lastShifts = processShifts(lastWeekRes.data || []);
-      const upcomingShifts = processShifts(upcomingRes.data || []);
-      const todayShiftsData = processShifts(todayRes.data || []);
-
-      setShifts(currentShifts);
-      setLastWeekShifts(lastShifts);
-      setUpcoming(upcomingShifts);
-      setTodayShifts(todayShiftsData);
-
-      const timeOffData: TimeOff[] = (timeOffRes.data || []).map((r: any) => ({
-        id: r.id,
-        employee_id: r.employee_id,
-        starts_at: r.starts_at,
-        ends_at: r.ends_at,
-        type: r.type,
-        reason: r.reason,
-        status: r.status,
-        employees: pickOne(r.employees),
-      }));
-      setPendingTO(timeOffData);
-
-      const weekHours = currentShifts.reduce(
-        (acc, s) => acc + hoursBetween(s.starts_at, s.ends_at, s.break_minutes),
-        0
-      );
-      const lastWeekHours = lastShifts.reduce(
-        (acc, s) => acc + hoursBetween(s.starts_at, s.ends_at, s.break_minutes),
-        0
-      );
-      const openShifts = currentShifts.filter((s) => !s.employee_id).length;
-      const completedShifts = currentShifts.filter((s) => s.status === "completed").length;
-      const completionRate = currentShifts.length > 0 ? (completedShifts / currentShifts.length) * 100 : 0;
-
-      const avgShiftLength =
-        currentShifts.length > 0
-          ? currentShifts.reduce((acc, s) => acc + hoursBetween(s.starts_at, s.ends_at, s.break_minutes), 0) /
-            currentShifts.length
-          : 0;
-
-      const employeeShiftCounts = currentShifts.reduce((acc, s) => {
-        if (s.employee_id) acc[s.employee_id] = (acc[s.employee_id] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-      const mostActiveEmployeeId = Object.entries(employeeShiftCounts).sort(([, a], [, b]) => b - a)[0]?.[0];
-      const mostActiveEmployee = mostActiveEmployeeId
-        ? employeesData.find((e) => e.id === mostActiveEmployeeId)?.full_name || null
-        : null;
-
-      const avgDailyShifts = currentShifts.length / 7;
-      const busyDays = weekDays
-        .filter((day) => {
-          const dayShifts = currentShifts.filter(
-            (s) => format(new Date(s.starts_at), "yyyy-MM-dd") === format(day, "yyyy-MM-dd")
-          );
-          return dayShifts.length > avgDailyShifts * 1.2;
-        })
-        .map((day) => format(day, "EEEE"));
-
-      setStats({
-        totalEmployees: employeesData.length,
-        weekHours,
-        openShifts,
-        pendingTimeOff: timeOffData.length,
-        completionRate,
-        avgShiftLength,
-        mostActiveEmployee,
-        busyDays,
-      });
+      setShifts(weekShifts || []);
+      setTodayShifts(todayShiftsData || []);
+      setEmployees(employeesData || []);
+      setLastUpdate(new Date());
     } catch (error) {
-      toast.error("Failed to load dashboard data");
-      console.error(error);
+      console.error("Error loading dashboard data:", error);
     } finally {
-      setBusy(false);
+      setLoading(false);
     }
-  }
+  }, [orgId, sb]); // Removed weekStart and weekEnd from dependencies
 
   React.useEffect(() => {
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orgId, weekStart]);
+    if (orgId) {
+      void loadData();
+    }
+  }, [orgId]); // Only depend on orgId
 
+  // Auto-refresh every 5 minutes
   React.useEffect(() => {
     if (!orgId) return;
-    const channels = [
-      sb
-        .channel(`shifts-${orgId}`)
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "shifts", filter: `org_id=eq.${orgId}` },
-          () => void load()
-        ),
-      sb
-        .channel(`timeoff-${orgId}`)
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "time_off", filter: `org_id=eq.${orgId}` },
-          () => void load()
-        ),
-      sb
-        .channel(`employees-${orgId}`)
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "employees", filter: `org_id=eq.${orgId}` },
-          () => void load()
-        ),
-    ];
 
-    channels.forEach((ch) => ch.subscribe());
-    return () => channels.forEach((ch) => sb.removeChannel(ch));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sb, orgId]);
+    const interval = setInterval(() => {
+      void loadData();
+    }, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [orgId, loadData]);
 
-  async function updateTOStatus(id: string, status: TimeOff["status"]) {
-    if (!perms.canApproveTimeOff) return;
+  // Calculate stats
+  const stats = React.useMemo(() => {
+    const totalShifts = shifts.length;
+    const assignedShifts = shifts.filter(s => s.employee_id).length;
+    const openShifts = shifts.filter(s => !s.employee_id).length;
+    const activeEmployees = new Set(shifts.filter(s => s.employee_id).map(s => s.employee_id)).size;
+    const totalHours = shifts.reduce((sum, shift) => {
+      const start = new Date(shift.starts_at);
+      const end = new Date(shift.ends_at);
+      return sum + ((end.getTime() - start.getTime()) / (1000 * 60 * 60));
+    }, 0);
 
-    const prev = [...pendingTO];
-    setPendingTO((cur) => cur.filter((r) => r.id !== id));
+    return {
+      totalShifts,
+      assignedShifts,
+      openShifts,
+      activeEmployees,
+      totalHours: Math.round(totalHours),
+      coverageRate: totalShifts > 0 ? Math.round((assignedShifts / totalShifts) * 100) : 0,
+    };
+  }, [shifts]);
 
-    const { error } = await sb.from("time_off").update({ status }).eq("id", id);
-    if (error) {
-      setPendingTO(prev);
-      toast.error("Failed to update request", { description: error.message });
-    } else {
-      toast.success(`Time off request ${status}`, {
-        description: `Successfully ${status} the request`,
-      });
-    }
-  }
+  const upcomingShifts = React.useMemo(() => {
+    if (!userId) return [];
+    return shifts
+      .filter(s => s.employee_id === userId && new Date(s.starts_at) > new Date())
+      .slice(0, 3);
+  }, [shifts, userId]);
 
-  if (loading || !orgId) {
+  if (orgLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex items-center gap-3 text-gray-500">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <div>
-            <div className="text-lg font-medium">Loading dashboard...</div>
-            <div className="text-sm text-gray-400">Fetching real-time data</div>
-          </div>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex items-center gap-3 text-gray-300"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+          >
+            <RefreshCw className="h-6 w-6" />
+          </motion.div>
+          <span className="text-lg font-medium">Loading dashboard...</span>
+        </motion.div>
       </div>
     );
   }
 
-  const coverage = weekDays.map((date) => {
-    const key = format(date, "yyyy-MM-dd");
-    const count = shifts.filter((s) => format(new Date(s.starts_at), "yyyy-MM-dd") === key).length;
-    const bar = Math.min(100, (count / TARGET_SHIFTS_PER_DAY) * 100);
-    return { date, count, bar };
-  });
-
-  const lastWeekHours = lastWeekShifts.reduce(
-    (acc, s) => acc + hoursBetween(s.starts_at, s.ends_at, s.break_minutes),
-    0
-  );
-  const hoursTrend = stats.weekHours > lastWeekHours ? "up" : stats.weekHours < lastWeekHours ? "down" : "neutral";
-  const hoursChange = stats.weekHours - lastWeekHours;
-
-  const lastWeekOpenShifts = lastWeekShifts.filter((s) => !s.employee_id).length;
-  const openShiftsTrend =
-    stats.openShifts < lastWeekOpenShifts ? "up" : stats.openShifts > lastWeekOpenShifts ? "down" : "neutral";
-
   return (
-    <div className="space-y-6 p-3 sm:p-4 lg:p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Good {getTimeOfDay()}! Dashboard</h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-1 flex items-center gap-2">
-            <Radio className="h-3 w-3 text-green-500" />
-            Live data • Last updated {format(lastUpdate, "h:mm a")}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setWeekStart(addDays(weekStart, -7))}
-            className="flex-shrink-0"
-            aria-label="Previous week"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <Card className="px-3 py-2 text-sm font-medium text-gray-700">
-            {format(weekStart, "MMM d")} – {format(weekEnd, "MMM d")}
-          </Card>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setWeekStart(addDays(weekStart, +7))}
-            className="flex-shrink-0"
-            aria-label="Next week"
-          >
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={load} disabled={busy} className="gap-2">
-            <RefreshCw className={cn("h-4 w-4", busy && "animate-spin")} />
-            <span className="hidden sm:inline">Refresh</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard
-          icon={<Users2 className="h-5 w-5" />}
-          title="Total Employees"
-          value={stats.totalEmployees}
-          subtitle="Active team members"
-          gradient="from-blue-500 to-cyan-500"
-          onClick={() => (window.location.href = "/employees")}
-        />
-
-        <StatCard
-          icon={<Clock className="h-5 w-5" />}
-          title="Hours This Week"
-          value={`${stats.weekHours.toFixed(1)}h`}
-          trend={hoursTrend}
-          trendValue={hoursChange > 0 ? `+${hoursChange.toFixed(1)}h` : `${hoursChange.toFixed(1)}h`}
-          gradient="from-purple-500 to-pink-500"
-        />
-
-        <StatCard
-          icon={<Calendar className="h-5 w-5" />}
-          title="Open Shifts"
-          value={stats.openShifts}
-          subtitle="Need assignment"
-          trend={openShiftsTrend}
-          trendValue={`${stats.openShifts - lastWeekOpenShifts > 0 ? "+" : ""}${
-            stats.openShifts - lastWeekOpenShifts
-          }`}
-          gradient="from-amber-500 to-orange-500"
-          onClick={() => (window.location.href = "/schedule")}
-        />
-
-        <StatCard
-          icon={<AlertTriangle className="h-5 w-5" />}
-          title="Pending Requests"
-          value={stats.pendingTimeOff}
-          subtitle="Time off requests"
-          gradient="from-red-500 to-rose-500"
-          onClick={() => (window.location.href = "/time-off")}
-        />
-      </div>
-
-      {/* Today's Overview & Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Today's Activity */}
-        <div className="lg:col-span-2">
-          <Card className="p-4 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900">Today's Activity</h2>
-              <Badge variant="outline" className="gap-1">
-                <Activity className="h-3 w-3" />
-                {todayShifts.length} shifts today
-              </Badge>
-            </div>
-
-            <div className="w-full">
-              <div className="flex rounded-md bg-gray-100 p-1 text-sm">
-                {/* Simple tabs without external component for small footprint */}
-                {/* Active Shifts / Coverage */}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-8"
+    >
+      {/* Enhanced Welcome Header */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.1 }}
+        className="bg-white/90 backdrop-blur-xl border border-slate-200 rounded-xl p-4 sm:p-6 shadow-lg"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <motion.h1
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-slate-800 via-blue-700 to-indigo-700 bg-clip-text text-transparent"
+            >
+              {getGreeting(userEmail?.split('@')[0])}
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-slate-600 mt-1 text-sm sm:text-base"
+            >
+              {isAdmin
+                ? "Manage your team's schedule and keep operations running smoothly."
+                : "Stay updated with your shifts and team schedule."}
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="flex items-center gap-2 mt-3 flex-wrap"
+            >
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-200 backdrop-blur-xl">
+                <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-emerald-700">Live data</span>
               </div>
-            </div>
-
-            {/* Tabs */}
-            <div className="mt-3">
-              <div className="grid grid-cols-2 w-full rounded-lg bg-gray-100 p-1 text-sm">
-                <button
-                  className="tabbtn peer relative rounded-md bg-white py-2 font-medium shadow"
-                  onClick={() => document.getElementById("tab-shifts")?.scrollIntoView({ behavior: "smooth", block: "nearest" })}
-                >
-                  Active Shifts
-                </button>
-                <button
-                  className="rounded-md py-2 font-medium hover:bg-white/60"
-                  onClick={() =>
-                    document.getElementById("tab-coverage")?.scrollIntoView({ behavior: "smooth", block: "nearest" })
-                  }
-                >
-                  Coverage
-                </button>
+              <div className="flex items-center gap-2 text-sm text-slate-500">
+                <CheckCircle className="h-4 w-4 text-emerald-500" />
+                <span>Updated {format(lastUpdate, "h:mm a")}</span>
               </div>
-
-              {/* Shifts */}
-              <div id="tab-shifts" className="mt-4">
-                <div className="space-y-3">
-                  {todayShifts.length === 0 ? (
-                    <div className="text-center py-10">
-                      <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                      <div className="text-sm font-medium text-gray-900">No shifts scheduled for today</div>
-                      <div className="text-xs text-gray-500 mt-1">Check back tomorrow or create new shifts</div>
-                    </div>
-                  ) : (
-                    todayShifts.map((shift) => {
-                      const startTime = new Date(shift.starts_at);
-                      const endTime = new Date(shift.ends_at);
-                      const now = new Date();
-                      const isActive = now >= startTime && now <= endTime;
-                      const isUpcoming = now < startTime;
-                      const isCompleted = now > endTime || shift.status === "completed";
-
-                      return (
-                        <div
-                          key={shift.id}
-                          className={cn(
-                            "flex items-center gap-4 p-4 rounded-lg border transition-all duration-200",
-                            isActive && "bg-green-50 border-green-200 shadow-sm",
-                            isUpcoming && "bg-blue-50 border-blue-200",
-                            isCompleted && "bg-gray-50 border-gray-200 opacity-75"
-                          )}
-                        >
-                          <div className="flex-shrink-0">
-                            {shift.employees ? (
-                              <EmployeeAvatar employee={shift.employees} size="md" showStatus={isActive} />
-                            ) : (
-                              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                <UserX className="h-4 w-4 text-gray-500" />
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <div className="font-medium text-gray-900">
-                                {shift.employees?.full_name || "Unassigned"}
-                              </div>
-                              {isActive && <Badge className="bg-green-600 text-white">Active</Badge>}
-                              {isUpcoming && (
-                                <Badge variant="outline" className="border-blue-300 text-blue-700">
-                                  Upcoming
-                                </Badge>
-                              )}
-                              {isCompleted && (
-                                <Badge variant="outline" className="border-gray-300 text-gray-600">
-                                  Completed
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="text-sm text-gray-600 mt-1 flex flex-wrap items-center gap-4">
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {format(startTime, "h:mm a")} – {format(endTime, "h:mm a")}
-                              </span>
-                              {shift.positions && (
-                                <span className="flex items-center gap-1">
-                                  <div
-                                    className="h-2 w-2 rounded-full"
-                                    style={{ backgroundColor: shift.positions.color || "#6366f1" }}
-                                  />
-                                  {shift.positions.name}
-                                </span>
-                              )}
-                              {shift.locations && (
-                                <span className="flex items-center gap-1">
-                                  <MapPin className="h-3 w-3" />
-                                  {shift.locations.name}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="text-right text-sm">
-                            <div className="font-medium text-gray-900">
-                              {hoursBetween(shift.starts_at, shift.ends_at, shift.break_minutes)}h
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {shift.break_minutes ? `${shift.break_minutes}m break` : "No break"}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-
-              {/* Coverage */}
-              <div id="tab-coverage" className="mt-6">
-                <CoverageChart coverage={coverage} target={TARGET_SHIFTS_PER_DAY} />
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Quick Actions & Insights */}
-        <div className="space-y-6">
-          {/* Quick Actions */}
-          <Card className="p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-            <div className="space-y-3">
-              <QuickActionCard
-                title="Create Shift"
-                description="Schedule a new shift for any employee"
-                icon={<Plus className="h-4 w-4 text-blue-600" />}
-                action="Create now"
-                href="/schedule"
-                variant="primary"
-              />
-
-              <QuickActionCard
-                title="Manage Employees"
-                description="Add, edit, or view employee details"
-                icon={<Users2 className="h-4 w-4 text-green-600" />}
-                action="Manage team"
-                href="/employees"
-                variant="success"
-              />
-
-              {stats.openShifts > 0 && (
-                <QuickActionCard
-                  title="Fill Open Shifts"
-                  description={`${stats.openShifts} shifts need assignment`}
-                  icon={<AlertTriangle className="h-4 w-4 text-amber-600" />}
-                  action="Assign now"
-                  href="/schedule"
-                  variant="warning"
-                />
-              )}
-
-              <QuickActionCard
-                title="Time Off Requests"
-                description="Review and approve pending requests"
-                icon={<Calendar className="h-4 w-4 text-gray-600" />}
-                action="Review"
-                href="/time-off"
-              />
-            </div>
-          </Card>
-
-          {/* Insights */}
-          <Card className="p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Insights</h3>
-            <div className="space-y-3 sm:space-y-4">
-              {stats.mostActiveEmployee && (
-                <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                  <Star className="h-5 w-5 text-green-600" />
-                  <div>
-                    <div className="text-sm font-medium text-green-900">Top Performer</div>
-                    <div className="text-xs text-green-700">{stats.mostActiveEmployee} has the most shifts</div>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                <BarChart3 className="h-5 w-5 text-blue-600" />
-                <div>
-                  <div className="text-sm font-medium text-blue-900">Avg Shift Length</div>
-                  <div className="text-xs text-blue-700">{stats.avgShiftLength.toFixed(1)} hours per shift</div>
-                </div>
-              </div>
-
-              {stats.completionRate > 0 && (
-                <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
-                  <Target className="h-5 w-5 text-purple-600" />
-                  <div>
-                    <div className="text-sm font-medium text-purple-900">Completion Rate</div>
-                    <div className="text-xs text-purple-700">{stats.completionRate.toFixed(1)}% of shifts completed</div>
-                  </div>
-                </div>
-              )}
-
-              {stats.busyDays.length > 0 && (
-                <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg">
-                  <TrendingUp className="h-5 w-5 text-amber-600" />
-                  <div>
-                    <div className="text-sm font-medium text-amber-900">Busy Days</div>
-                    <div className="text-xs text-amber-700">{stats.busyDays.join(", ")}</div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </Card>
-        </div>
-      </div>
-
-      {/* Coverage Analysis */}
-      <Card className="p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
-          <div>
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Weekly Coverage Analysis</h2>
-            <p className="text-xs sm:text-sm text-gray-500 mt-1">Target: {TARGET_SHIFTS_PER_DAY} shifts per day</p>
+            </motion.div>
           </div>
-          <Button variant="outline" size="sm" asChild>
-            <a href="/schedule" className="gap-2">
-              <CalendarDays className="h-4 w-4" />
-              Full Schedule
-            </a>
-          </Button>
-        </div>
-
-        <CoverageChart coverage={coverage} target={TARGET_SHIFTS_PER_DAY} />
-      </Card>
-
-      {/* Time Off & Upcoming */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {/* Pending Time Off Requests */}
-        <Card className="p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Time Off Requests</h2>
-            <div className="flex items-center gap-2">
-              {stats.pendingTimeOff > 0 && (
-                <Badge variant="destructive" className="text-xs">
-                  {stats.pendingTimeOff} pending
-                </Badge>
-              )}
-              <Button variant="outline" size="sm" asChild>
-                <a href="/time-off" className="gap-1">
-                  Manage <ChevronRight className="h-3 w-3" />
-                </a>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5 }}
+            className="flex items-center gap-3"
+          >
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                variant="outline"
+                onClick={loadData}
+                disabled={loading}
+                className="rounded-xl border-slate-200/60 hover:bg-slate-50/80 hover:border-slate-300/60 transition-all duration-200"
+              >
+                <motion.div
+                  animate={{ rotate: loading ? 360 : 0 }}
+                  transition={{ duration: 1, repeat: loading ? Infinity : 0, ease: "linear" }}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                </motion.div>
+                Refresh
               </Button>
-            </div>
-          </div>
-
-          {/* Height-bounded scroll with stable gutter on all screens */}
-          <div className="space-y-3 max-h-80 md:max-h-96 overflow-y-auto [scrollbar-gutter:stable]">
-            {busy && (
-              <div className="flex items-center gap-2 text-sm text-gray-500 justify-center py-8">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Loading requests...
-              </div>
+            </motion.div>
+            {isAdmin && (
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button className="rounded-xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-700 hover:to-fuchsia-700 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Quick Actions
+                </Button>
+              </motion.div>
             )}
+          </motion.div>
+        </div>
+      </motion.div>
 
-            {!busy && pendingTO.length === 0 && (
-              <div className="text-center py-10">
-                <UserCheck className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <div className="text-sm font-medium text-gray-900">All caught up!</div>
-                <div className="text-xs text-gray-500 mt-1">No pending time off requests</div>
-              </div>
-            )}
+      {/* Enhanced Stats Grid */}
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={{
+          hidden: { opacity: 0 },
+          visible: {
+            opacity: 1,
+            transition: {
+              staggerChildren: 0.1,
+              delayChildren: 0.2,
+            },
+          },
+        }}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+      >
+        {[
+          {
+            title: "Total Shifts",
+            value: stats.totalShifts,
+            subtitle: "This week",
+            icon: Calendar,
+            color: "from-blue-500 to-indigo-600",
+            bgColor: "from-blue-50 to-indigo-50",
+            iconColor: "text-blue-600",
+          },
+          {
+            title: "Coverage Rate",
+            value: `${stats.coverageRate}%`,
+            subtitle: `${stats.assignedShifts} of ${stats.totalShifts} assigned`,
+            icon: CheckCircle,
+            color: "from-emerald-500 to-green-600",
+            bgColor: "from-emerald-50 to-green-50",
+            iconColor: "text-emerald-600",
+          },
+          {
+            title: "Open Shifts",
+            value: stats.openShifts,
+            subtitle: "Need assignment",
+            icon: AlertCircle,
+            color: "from-amber-500 to-orange-600",
+            bgColor: "from-amber-50 to-orange-50",
+            iconColor: "text-amber-600",
+          },
+          {
+            title: "Total Hours",
+            value: stats.totalHours,
+            subtitle: "Scheduled hours",
+            icon: Clock,
+            color: "from-purple-500 to-fuchsia-600",
+            bgColor: "from-purple-50 to-fuchsia-50",
+            iconColor: "text-purple-600",
+          },
+        ].map((stat, index) => (
+          <motion.div
+            key={stat.title}
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              visible: { opacity: 1, y: 0 },
+            }}
+            whileHover={{ y: -2, scale: 1.01 }}
+            className="group"
+          >
+            <Card className={`relative overflow-hidden border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 bg-white/95 backdrop-blur-sm`}>
+              {/* Gradient overlay on hover */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-5 transition-opacity duration-200`} />
 
-            {!busy &&
-              pendingTO.map((request) => (
-                <div
-                  key={request.id}
-                  className="flex items-center gap-4 p-4 rounded-lg border bg-white hover:shadow-sm transition-shadow"
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                  {stat.title}
+                </CardTitle>
+                <motion.div
+                  whileHover={{ scale: 1.2, rotate: 5 }}
+                  className={`p-1.5 rounded-lg bg-white/80 shadow-sm border border-slate-200`}
                 >
-                  <div className="flex-shrink-0">
-                    {request.employees ? (
-                      <EmployeeAvatar employee={request.employees} size="md" />
-                    ) : (
-                      <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                        <UserX className="h-4 w-4 text-gray-500" />
-                      </div>
-                    )}
-                  </div>
+                  <stat.icon className={`h-4 w-4 ${stat.iconColor}`} />
+                </motion.div>
+              </CardHeader>
+              <CardContent>
+                <motion.div
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.3 + index * 0.1, type: "spring", stiffness: 200 }}
+                  className={`text-2xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent mb-1`}
+                >
+                  {stat.value}
+                </motion.div>
+                <p className="text-xs text-slate-500">{stat.subtitle}</p>
+              </CardContent>
 
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-900">{request.employees?.full_name || "Unknown Employee"}</div>
-                    <div className="text-sm text-gray-600 mt-1">
-                      {format(new Date(request.starts_at), "MMM d")} – {format(new Date(request.ends_at), "MMM d")}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-xs capitalize">
-                        {request.type}
-                      </Badge>
-                      {request.reason && <div className="text-xs text-gray-500 truncate">"{request.reason}"</div>}
-                    </div>
-                  </div>
+              {/* Animated border on hover */}
+              <motion.div
+                className={`absolute inset-0 rounded-xl border-2 ${stat.color.includes('blue') ? 'border-blue-300/40' : stat.color.includes('emerald') ? 'border-emerald-300/40' : stat.color.includes('amber') ? 'border-amber-300/40' : 'border-purple-300/40'} opacity-0 group-hover:opacity-60 transition-opacity duration-300`}
+              />
+            </Card>
+          </motion.div>
+        ))}
+      </motion.div>
 
-                  {perms.canApproveTimeOff ? (
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => updateTOStatus(request.id, "approved")}
-                        className="gap-1 text-green-700 border-green-200 hover:bg-green-50"
-                        aria-label="Approve"
-                      >
-                        <Check className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => updateTOStatus(request.id, "denied")}
-                        className="gap-1 text-red-700 border-red-200 hover:bg-red-50"
-                        aria-label="Deny"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <Badge variant="secondary" className="text-xs">
-                      View only
-                    </Badge>
-                  )}
-                </div>
-              ))}
-          </div>
-        </Card>
-
-        {/* Upcoming Shifts */}
-        <Card className="p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Upcoming Shifts</h2>
-            <Button variant="outline" size="sm" asChild>
-              <a href="/schedule" className="gap-1">
-                View all <ChevronRight className="h-3 w-3" />
-              </a>
-            </Button>
-          </div>
-
-          <div className="space-y-3 max-h-80 md:max-h-96 overflow-y-auto [scrollbar-gutter:stable]">
-            {upcoming.length === 0 ? (
-              <div className="text-center py-10">
-                <Clock className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <div className="text-sm font-medium text-gray-900">No upcoming shifts</div>
-                <div className="text-xs text-gray-500 mt-1">Schedule shifts to see them here</div>
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
+        {/* Today's Schedule */}
+        <Card className="lg:col-span-2 bg-white/95 border-slate-200 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-slate-800 text-base">
+              <Calendar className="h-4 w-4 text-blue-600" />
+              Today's Schedule
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {todayShifts.length === 0 ? (
+              <div className="text-center py-8">
+                <Coffee className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+                <div className="text-sm font-medium text-slate-800">No shifts today</div>
+                <div className="text-xs text-slate-500 mt-1">Enjoy your day off!</div>
               </div>
             ) : (
-              upcoming.map((shift) => {
-                const startTime = new Date(shift.starts_at);
-                const isT = isToday(startTime);
-                const isTm = isTomorrow(startTime);
+              <div className="space-y-3">
+                {todayShifts.map((shift) => {
+                  const startTime = new Date(shift.starts_at);
+                  const endTime = new Date(shift.ends_at);
+                  const employee = Array.isArray(shift.employees) ? shift.employees[0] : shift.employees;
+                  const position = Array.isArray(shift.positions) ? shift.positions[0] : shift.positions;
+                  const location = Array.isArray(shift.locations) ? shift.locations[0] : shift.locations;
 
-                let timeLabel = format(startTime, "MMM d");
-                if (isT) timeLabel = "Today";
-                else if (isTm) timeLabel = "Tomorrow";
-
-                return (
-                  <div
-                    key={shift.id}
-                    className={cn(
-                      "flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 hover:shadow-sm",
-                      isT ? "bg-blue-50 border-blue-200" : "bg-white"
-                    )}
-                  >
-                    <div className="flex-shrink-0">
-                      {shift.employees ? (
-                        <EmployeeAvatar employee={shift.employees} size="sm" />
-                      ) : (
-                        <div className="h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center">
-                          <UserX className="h-3 w-3 text-gray-500" />
+                  return (
+                    <div key={shift.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="text-sm font-medium text-gray-900">
+                          {format(startTime, "h:mm a")} - {format(endTime, "h:mm a")}
                         </div>
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm text-gray-900">{shift.employees?.full_name || "Unassigned"}</div>
-                      <div className="text-xs text-gray-600 mt-0.5">
-                        {timeLabel} • {format(startTime, "h:mm a")}–{format(new Date(shift.ends_at), "h:mm a")}
-                      </div>
-                      {shift.positions && (
-                        <div className="flex items-center gap-1 mt-1">
-                          <div
-                            className="h-1.5 w-1.5 rounded-full"
-                            style={{ backgroundColor: shift.positions.color || "#6366f1" }}
-                          />
-                          <span className="text-xs text-gray-500">{shift.positions.name}</span>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          {employee ? (
+                            <span>{employee.full_name}</span>
+                          ) : (
+                            <Badge variant="outline" className="text-orange-600 border-orange-200">
+                              Open
+                            </Badge>
+                          )}
+                          {position && (
+                            <Badge variant="secondary">{position.name}</Badge>
+                          )}
+                          {location && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {location.name}
+                            </span>
+                          )}
                         </div>
-                      )}
-                    </div>
-
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-gray-900">
-                        {hoursBetween(shift.starts_at, shift.ends_at, shift.break_minutes)}h
                       </div>
                     </div>
-                  </div>
-                );
-              })
+                  );
+                })}
+              </div>
             )}
-          </div>
+          </CardContent>
         </Card>
+
+        {/* My Upcoming Shifts (for employees) */}
+        {!isAdmin && (
+          <Card className="bg-white/90 border-slate-200 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-slate-800">
+                <Clock className="h-5 w-5 text-blue-600" />
+                My Upcoming Shifts
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {upcomingShifts.length === 0 ? (
+                <div className="text-center py-6">
+                  <Coffee className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+                  <div className="text-sm font-medium text-slate-800">No upcoming shifts</div>
+                  <div className="text-xs text-slate-500 mt-1">Check back later</div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {upcomingShifts.map((shift) => {
+                    const startTime = new Date(shift.starts_at);
+                    const endTime = new Date(shift.ends_at);
+                    const isToday = format(startTime, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+                    const isTomorrow = format(startTime, "yyyy-MM-dd") === format(addDays(new Date(), 1), "yyyy-MM-dd");
+
+                    return (
+                      <div key={shift.id} className="p-3 border border-slate-200 rounded-lg bg-slate-50">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-sm font-medium text-slate-800">
+                            {isToday ? "Today" : isTomorrow ? "Tomorrow" : format(startTime, "EEE, MMM d")}
+                          </div>
+                          {isToday && <Badge className="bg-blue-100 text-blue-700">Today</Badge>}
+                        </div>
+                        <div className="text-sm text-slate-600">
+                          {format(startTime, "h:mm a")} - {format(endTime, "h:mm a")}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Quick Actions for Admin */}
+        {isAdmin && (
+          <Card className="bg-white/90 border-slate-200 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-slate-800">
+                <Users className="h-5 w-5 text-blue-600" />
+                Quick Actions
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button variant="outline" className="w-full justify-start border-slate-200 hover:bg-slate-50 text-slate-700" size="sm">
+                <Calendar className="h-4 w-4 mr-2 text-blue-600" />
+                View Schedule
+              </Button>
+              <Button variant="outline" className="w-full justify-start border-slate-200 hover:bg-slate-50 text-slate-700" size="sm">
+                <Plus className="h-4 w-4 mr-2 text-emerald-600" />
+                Add Shift
+              </Button>
+              <Button variant="outline" className="w-full justify-start border-slate-200 hover:bg-slate-50 text-slate-700" size="sm">
+                <Users className="h-4 w-4 mr-2 text-indigo-600" />
+                Manage Employees
+              </Button>
+              <Button variant="outline" className="w-full justify-start border-slate-200 hover:bg-slate-50 text-slate-700" size="sm">
+                <Clock className="h-4 w-4 mr-2 text-orange-600" />
+                Time Off Requests
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {/* Detailed Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Employee Performance */}
-        <Card className="p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Employee Overview</h2>
-            <Button variant="outline" size="sm" asChild>
-              <a href="/employees" className="gap-1">
-                Manage <ChevronRight className="h-3 w-3" />
+      {/* Quick Navigation */}
+      <Card className="bg-white/90 border-slate-200 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-slate-800">
+            <ArrowRight className="h-5 w-5 text-blue-600" />
+            Quick Navigation
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Button variant="outline" className="h-16 flex-col border-slate-200 hover:bg-slate-50 text-slate-700" asChild>
+              <a href="/schedule">
+                <Calendar className="h-6 w-6 mb-1 text-blue-600" />
+                <span className="text-xs">Schedule</span>
+              </a>
+            </Button>
+            <Button variant="outline" className="h-16 flex-col border-slate-200 hover:bg-slate-50 text-slate-700" asChild>
+              <a href="/employees">
+                <Users className="h-6 w-6 mb-1 text-indigo-600" />
+                <span className="text-xs">Employees</span>
+              </a>
+            </Button>
+            <Button variant="outline" className="h-16 flex-col border-slate-200 hover:bg-slate-50 text-slate-700" asChild>
+              <a href="/time-off">
+                <Clock className="h-6 w-6 mb-1 text-orange-600" />
+                <span className="text-xs">Time Off</span>
+              </a>
+            </Button>
+            <Button variant="outline" className="h-16 flex-col border-slate-200 hover:bg-slate-50 text-slate-700" asChild>
+              <a href="/report">
+                <TrendingUp className="h-6 w-6 mb-1 text-emerald-600" />
+                <span className="text-xs">Reports</span>
               </a>
             </Button>
           </div>
-
-          <div className="space-y-3">
-            {employees.slice(0, 5).map((emp) => {
-              const empShifts = shifts.filter((s) => s.employee_id === emp.id);
-              const totalHours = empShifts.reduce(
-                (acc, s) => acc + hoursBetween(s.starts_at, s.ends_at, s.break_minutes),
-                0
-              );
-              const completedShifts = empShifts.filter((s) => s.status === "completed").length;
-              const completionRate = empShifts.length > 0 ? (completedShifts / empShifts.length) * 100 : 0;
-
-              return (
-                <div
-                  key={emp.id}
-                  className="flex items-center gap-4 p-3 rounded-lg bg-gray-50/60 hover:bg-gray-100/60 transition-colors"
-                >
-                  <EmployeeAvatar employee={emp} size="md" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-900">{emp.full_name}</div>
-                    <div className="text-sm text-gray-600 mt-0.5">
-                      {empShifts.length} shifts • {totalHours.toFixed(1)}h
-                    </div>
-                    {emp.position && <div className="text-xs text-gray-500 mt-0.5">{emp.position.name}</div>}
-                  </div>
-                  <div className="text-right">
-                    <div
-                      className={cn(
-                        "text-sm font-medium",
-                        completionRate >= 90 ? "text-green-600" : completionRate >= 70 ? "text-amber-600" : "text-red-600"
-                      )}
-                    >
-                      {completionRate.toFixed(0)}%
-                    </div>
-                    <div className="text-xs text-gray-500">completion</div>
-                  </div>
-                </div>
-              );
-            })}
-
-            {employees.length === 0 && (
-              <div className="text-center py-10">
-                <Users2 className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <div className="text-sm font-medium text-gray-900">No employees found</div>
-                <div className="text-xs text-gray-500 mt-1">Add employees to see analytics</div>
-              </div>
-            )}
-          </div>
-        </Card>
-
-        {/* Recent Activity */}
-        <Card className="p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Recent Activity</h2>
-            <Badge variant="outline" className="gap-1">
-              <Activity className="h-3 w-3" />
-              Live updates
-            </Badge>
-          </div>
-
-          <div className="space-y-3">
-            {shifts
-              .slice()
-              .sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime())
-              .slice(0, 6)
-              .map((shift) => {
-                const startTime = new Date(shift.starts_at);
-                const isRecent = differenceInMinutes(new Date(), startTime) < 1440;
-
-                return (
-                  <div
-                    key={shift.id}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-white border hover:shadow-sm transition-shadow"
-                  >
-                    <div className="flex-shrink-0">
-                      {shift.employees ? (
-                        <EmployeeAvatar employee={shift.employees} size="sm" />
-                      ) : (
-                        <div className="h-6 w-6 rounded-full bg-amber-100 flex items-center justify-center">
-                          <UserX className="h-3 w-3 text-amber-600" />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900">{shift.employees?.full_name || "Open shift"}</div>
-                      <div className="text-xs text-gray-600 mt-0.5">
-                        {isToday(startTime) ? "Today" : format(startTime, "MMM d")} • {format(startTime, "h:mm a")}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {shift.positions && (
-                        <Badge variant="outline" className="text-xs">
-                          {shift.positions.name}
-                        </Badge>
-                      )}
-                      {isRecent && (
-                        <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" title="Recently updated" />
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-
-            {shifts.length === 0 && (
-              <div className="text-center py-10">
-                <Activity className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <div className="text-sm font-medium text-gray-900">No recent activity</div>
-                <div className="text-xs text-gray-500 mt-1">Activity will appear here as shifts are created</div>
-              </div>
-            )}
-          </div>
-        </Card>
-
-        {/* Performance Metrics */}
-        <Card className="p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Performance Metrics</h2>
-            <Button variant="outline" size="sm" asChild>
-              <a href="/analytics" className="gap-1">
-                Details <ChevronRight className="h-3 w-3" />
-              </a>
-            </Button>
-          </div>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Schedule Completion</span>
-                <span className="font-medium text-gray-900">{stats.completionRate.toFixed(0)}%</span>
-              </div>
-              <Progress value={stats.completionRate} className="h-2" />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Coverage Rate</span>
-                <span className="font-medium text-gray-900">
-                  {((shifts.length / (TARGET_SHIFTS_PER_DAY * 7)) * 100).toFixed(0)}%
-                </span>
-              </div>
-              <Progress value={(shifts.length / (TARGET_SHIFTS_PER_DAY * 7)) * 100} className="h-2" />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Shift Assignment</span>
-                <span className="font-medium text-gray-900">
-                  {shifts.length > 0 ? (((shifts.length - stats.openShifts) / shifts.length) * 100).toFixed(0) : 0}%
-                </span>
-              </div>
-              <Progress
-                value={shifts.length > 0 ? ((shifts.length - stats.openShifts) / shifts.length) * 100 : 0}
-                className="h-2"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mt-6 pt-4 border-t">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{stats.avgShiftLength.toFixed(1)}h</div>
-                <div className="text-xs text-gray-500">Avg Shift</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {shifts.filter((s) => s.status === "completed").length}
-                </div>
-                <div className="text-xs text-gray-500">Completed</div>
-              </div>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* System Status */}
-      <Card className="p-3 sm:p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-          <div className="text-sm font-medium text-green-900">System Status: All services operational</div>
-          <div className="ml-auto text-xs text-green-700">Last sync: {format(lastUpdate, "h:mm:ss a")}</div>
-        </div>
+        </CardContent>
       </Card>
-    </div>
-  );
-}
-
-/* ============== Optional helper (unused in main layout) ============== */
-function KpiCard({
-  icon,
-  title,
-  value,
-  accent = "from-slate-50 to-white text-slate-700",
-}: {
-  icon: React.ReactNode;
-  title: string;
-  value: string | number;
-  accent?: string;
-}) {
-  return (
-    <Card className="p-4">
-      <div className="flex items-center gap-3">
-        <div className={cn("grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br", accent)}>{icon}</div>
-        <div>
-          <div className="text-sm text-slate-500">{title}</div>
-          <div className="text-xl font-semibold">{value}</div>
-        </div>
-      </div>
-    </Card>
+    </motion.div>
   );
 }

@@ -1,557 +1,648 @@
-// app/(dashboard)/time-off/page.tsx
 "use client";
 
 import * as React from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useOrg } from "@/components/providers/OrgProvider";
 import { usePermissions } from "@/app/hooks/usePermissions";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
-import { Loader2, Plus, Check, X, Trash2, Filter } from "lucide-react";
+import {
+  Loader2, Plus, Check, X, Trash2, Filter, Calendar, Clock,
+  User, Building, TrendingUp, AlertCircle, Eye, Search, CalendarDays,
+  Briefcase, Heart, Users, FileText, Download
+} from "lucide-react";
 
 type Role = "admin" | "manager" | "employee";
 type Row = {
   id: string;
   employee_id: string;
-  starts_at: string; // 'YYYY-MM-DD' (date column)
-  ends_at: string;   // 'YYYY-MM-DD' (date column)
-  type: "vacation" | "sick" | "unpaid" | "other";
+  starts_at: string;
+  ends_at: string;
+  type: "vacation" | "sick" | "unpaid" | "personal" | "other";
   reason: string | null;
   status: "pending" | "approved" | "denied";
-  employees?: { full_name: string; avatar_url: string | null } | null;
+  created_at?: string;
+  employees?: { full_name: string; avatar_url: string | null };
 };
 
-type MaybeArray<T> = T | T[] | null | undefined;
-function pickOne<T>(v: MaybeArray<T>): T | null {
-  return Array.isArray(v) ? v[0] ?? null : v ?? null;
-}
+type Employee = {
+  id: string;
+  full_name: string;
+  avatar_url: string | null;
+};
 
-function StatusBadge({ status }: { status: Row["status"] }) {
-  const map: Record<Row["status"], { label: string; cls: string }> = {
-    pending: { label: "Pending", cls: "bg-amber-50 text-amber-700 border-amber-200" },
-    approved:{ label: "Approved", cls:"bg-emerald-50 text-emerald-700 border-emerald-200" },
-    denied:  { label: "Denied", cls:  "bg-rose-50 text-rose-700 border-rose-200" },
+/* ================== Badge Components ================== */
+const StatusBadge = ({ status }: { status: Row["status"] }) => {
+  const config = {
+    pending: { label: "Pending", className: "bg-amber-50 text-amber-700 border-amber-200", icon: Clock },
+    approved: { label: "Approved", className: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: Check },
+    denied: { label: "Denied", className: "bg-red-50 text-red-700 border-red-200", icon: X },
   };
-  const cfg = map[status];
-  return <Badge variant="outline" className={cfg.cls}>{cfg.label}</Badge>;
-}
+  const { label, className, icon: Icon } = config[status];
+  return (
+    <Badge variant="outline" className={className}>
+      <Icon className="h-3 w-3 mr-1" />
+      {label}
+    </Badge>
+  );
+};
 
-function TypeBadge({ type }: { type: Row["type"] }) {
-  const map: Record<Row["type"], string> = {
-    vacation: "bg-teal-50 text-teal-700 border-teal-200",
-    sick:     "bg-sky-50 text-sky-700 border-sky-200",
-    unpaid:   "bg-slate-50 text-slate-700 border-slate-200",
-    other:    "bg-indigo-50 text-indigo-700 border-indigo-200",
+const TypeBadge = ({ type }: { type: Row["type"] }) => {
+  const config = {
+    vacation: { label: "Vacation", className: "bg-blue-50 text-blue-700 border-blue-200", icon: CalendarDays },
+    sick: { label: "Sick Leave", className: "bg-red-50 text-red-700 border-red-200", icon: Heart },
+    unpaid: { label: "Unpaid Leave", className: "bg-slate-50 text-slate-700 border-slate-200", icon: Briefcase },
+    personal: { label: "Personal", className: "bg-purple-50 text-purple-700 border-purple-200", icon: User },
+    other: { label: "Other", className: "bg-orange-50 text-orange-700 border-orange-200", icon: AlertCircle },
   };
-  return <Badge variant="outline" className={map[type]}>{type}</Badge>;
-}
+  const { label, className, icon: Icon } = config[type];
+  return (
+    <Badge variant="outline" className={className}>
+      <Icon className="h-3 w-3 mr-1" />
+      {label}
+    </Badge>
+  );
+};
 
+/* ================== Stats Card Component ================== */
+const StatsCard = ({ title, value, subtitle, icon: Icon, color, trend }: {
+  title: string;
+  value: number | string;
+  subtitle: string;
+  icon: any;
+  color: string;
+  trend?: { value: number; label: string };
+}) => (
+  <Card className="bg-white/95 border-slate-200 shadow-sm hover:shadow-md transition-all duration-200">
+    <CardContent className="p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">{title}</p>
+          <p className={`text-2xl font-bold ${color} mt-1`}>{value}</p>
+          <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
+        </div>
+        <div className={`p-2 rounded-lg bg-white shadow-sm border border-slate-200`}>
+          <Icon className={`h-4 w-4 ${color}`} />
+        </div>
+      </div>
+      {trend && (
+        <div className="mt-2 flex items-center text-xs">
+          <span className={trend.value > 0 ? "text-green-600" : trend.value < 0 ? "text-red-600" : "text-slate-500"}>
+            {trend.value > 0 ? '↗' : trend.value < 0 ? '↘' : '→'} {Math.abs(trend.value)}%
+          </span>
+          <span className="text-slate-500 ml-1">{trend.label}</span>
+        </div>
+      )}
+    </CardContent>
+  </Card>
+);
+
+/* ================== Request Form Component ================== */
+const RequestForm = ({ open, onOpenChange, onSuccess, employees }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+  employees: Employee[];
+}) => {
+  const sb = React.useMemo(() => createClient(), []);
+  const { orgId } = useOrg();
+  const [loading, setLoading] = React.useState(false);
+  const [formData, setFormData] = React.useState({
+    employee_id: '',
+    start_date: '',
+    end_date: '',
+    type: 'vacation' as Row['type'],
+    reason: '',
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.start_date || !formData.end_date || !formData.employee_id) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await sb.from("time_off").insert({
+      org_id: orgId,
+      employee_id: formData.employee_id,
+      starts_at: formData.start_date,
+      ends_at: formData.end_date,
+      type: formData.type,
+      reason: formData.reason.trim() || null,
+      status: 'pending'
+    });
+
+    setLoading(false);
+    if (error) {
+      toast.error("Failed to submit request");
+      return;
+    }
+
+    toast.success("Time off request submitted");
+    onOpenChange(false);
+    onSuccess();
+
+    // Reset form
+    setFormData({ employee_id: '', start_date: '', end_date: '', type: 'vacation', reason: '' });
+  };
+
+  const days = formData.start_date && formData.end_date ?
+    differenceInDays(new Date(formData.end_date), new Date(formData.start_date)) + 1 : 0;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Request Time Off</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Start Date</Label>
+              <div className="relative">
+                <Input
+                  type="date"
+                  value={formData.start_date}
+                  onChange={(e) => setFormData(prev => ({...prev, start_date: e.target.value}))}
+                  min={format(new Date(), 'yyyy-MM-dd')}
+                  className="border-slate-300"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>End Date</Label>
+              <div className="relative">
+                <Input
+                  type="date"
+                  value={formData.end_date}
+                  onChange={(e) => setFormData(prev => ({...prev, end_date: e.target.value}))}
+                  min={formData.start_date || format(new Date(), 'yyyy-MM-dd')}
+                  className="border-slate-300"
+                />
+              </div>
+            </div>
+          </div>
+
+          {days > 0 && (
+            <div className="text-sm text-slate-600 bg-blue-50 p-2 rounded-lg">
+              📅 Duration: <span className="font-medium">{days} day{days > 1 ? 's' : ''}</span>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label>Employee</Label>
+            <Select value={formData.employee_id} onValueChange={(v) => setFormData(prev => ({...prev, employee_id: v}))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select employee" />
+              </SelectTrigger>
+              <SelectContent>
+                {employees.map(emp => (
+                  <SelectItem key={emp.id} value={emp.id}>{emp.full_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Type</Label>
+            <Select value={formData.type} onValueChange={(v) => setFormData(prev => ({...prev, type: v as Row['type']}))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="vacation">🏖️ Vacation</SelectItem>
+                <SelectItem value="sick">🤒 Sick Leave</SelectItem>
+                <SelectItem value="personal">👤 Personal</SelectItem>
+                <SelectItem value="unpaid">💼 Unpaid Leave</SelectItem>
+                <SelectItem value="other">📋 Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Reason (Optional)</Label>
+            <Textarea
+              value={formData.reason}
+              onChange={(e) => setFormData(prev => ({...prev, reason: e.target.value}))}
+              placeholder="Add any additional details..."
+              className="resize-none"
+              rows={3}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading} className="bg-gradient-to-r from-blue-600 to-indigo-600">
+              {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Submit Request
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+/* ================== Main Component ================== */
 export default function TimeOffPage() {
   const sb = React.useMemo(() => createClient(), []);
   const { orgId, role, loading } = useOrg();
-  const perms = usePermissions(role as Role | null);
+  const perms = usePermissions(role);
 
-  // Data
   const [rows, setRows] = React.useState<Row[]>([]);
-  const [busy, setBusy] = React.useState(true);
-  const [myEmployeeId, setMyEmployeeId] = React.useState<string | null>(null);
+  const [employees, setEmployees] = React.useState<Employee[]>([]);
+  const [statusFilter, setStatusFilter] = React.useState<string>("all");
+  const [typeFilter, setTypeFilter] = React.useState<string>("all");
+  const [employeeFilter, setEmployeeFilter] = React.useState<string>("all");
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [requestDialogOpen, setRequestDialogOpen] = React.useState(false);
 
-  // Per-row update spinner
-  const [updating, setUpdating] = React.useState<Record<string, boolean>>({});
+  const canManage = perms.canManageSchedule;
 
-  // Filters
-  const [statusFilter, setStatusFilter] = React.useState<"all" | Row["status"]>("all");
-  const [typeFilter, setTypeFilter] = React.useState<"all" | Row["type"]>("all");
-  const [scope, setScope] = React.useState<"mine" | "all">(role === "admin" || role === "manager" ? "all" : "mine");
-  const [search, setSearch] = React.useState("");
-
-  // New request dialog
-  const [open, setOpen] = React.useState(false);
-  const [start, setStart] = React.useState<string>("");
-  const [end, setEnd] = React.useState<string>("");
-  const [type, setType] = React.useState<Row["type"]>("vacation");
-  const [reason, setReason] = React.useState("");
-  const [submitting, setSubmitting] = React.useState(false);
-
-  const canApprove = perms.canApproveTimeOff;
-  const canSubmit = perms.canSubmitTimeOff;
-
-  const load = React.useCallback(async () => {
+  const loadData = React.useCallback(async () => {
     if (!orgId) return;
-    setBusy(true);
 
-    // Fetch my employee id
-    const { data: u } = await sb.auth.getUser();
-    const uid = u.user?.id ?? null;
-    if (uid) {
-      const { data: me, error: meErr } = await sb
-        .from("employees")
-        .select("id")
+    const [{ data: timeOffData }, { data: employeesData }] = await Promise.all([
+      sb.from("time_off")
+        .select(`
+          id, employee_id, starts_at, ends_at, type, reason, status, created_at,
+          employees!employee_id(full_name, avatar_url)
+        `)
         .eq("org_id", orgId)
-        .eq("profile_id", uid)
-        .limit(1)
-        .maybeSingle();
-      if (!meErr) setMyEmployeeId(me?.id ?? null);
-    }
+        .order("created_at", { ascending: false }),
+      sb.from("employees")
+        .select("id, full_name, avatar_url")
+        .eq("org_id", orgId)
+        .eq("active", true)
+        .order("full_name")
+    ]);
 
-    // Fetch time-off requests in org
-    const { data, error } = await sb
-      .from("time_off")
-      .select(
-        "id, employee_id, starts_at, ends_at, type, reason, status, employees:employee_id(full_name, avatar_url)"
-      )
-      .eq("org_id", orgId)
-      .order("starts_at", { ascending: false });
+    if (timeOffData) setRows(timeOffData as any);
+    if (employeesData) setEmployees(employeesData as Employee[]);
+  }, [orgId, sb]);
 
-    if (error) {
-      toast.error("Failed to load time off", { description: error.message });
-      setRows([]);
-      setBusy(false);
-      return;
-    }
+  React.useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
-    // Normalize
-    const normalized: Row[] = (data || []).map((r: any) => ({
-      id: r.id,
-      employee_id: r.employee_id,
-      starts_at: r.starts_at,
-      ends_at: r.ends_at,
-      type: r.type,
-      reason: r.reason,
-      status: r.status,
-      employees: pickOne(r.employees),
-    }));
-
-    setRows(normalized);
-    setBusy(false);
-  }, [sb, orgId]);
-
-  React.useEffect(() => { void load(); }, [load]);
-
-  // Realtime
+  // Real-time updates
   React.useEffect(() => {
     if (!orgId) return;
     const ch = sb
-      .channel(`timeoff-${orgId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "time_off", filter: `org_id=eq.${orgId}` },
-        load
-      )
+      .channel(`time-off-${orgId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "time_off", filter: `org_id=eq.${orgId}` }, loadData)
       .subscribe();
     return () => { sb.removeChannel(ch); };
-  }, [sb, orgId, load]);
+  }, [sb, orgId, loadData]);
 
-  // Derived
-  const filtered = React.useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    return rows.filter((r) => {
-      if (scope === "mine" && myEmployeeId && r.employee_id !== myEmployeeId) return false;
-      if (statusFilter !== "all" && r.status !== statusFilter) return false;
-      if (typeFilter !== "all" && r.type !== typeFilter) return false;
-      if (needle) {
-        const name = r.employees?.full_name?.toLowerCase() ?? "";
-        const rsn = r.reason?.toLowerCase() ?? "";
-        if (!name.includes(needle) && !rsn.includes(needle)) return false;
-      }
-      return true;
-    });
-  }, [rows, scope, myEmployeeId, statusFilter, typeFilter, search]);
+  const filteredRows = React.useMemo(() => {
+    let filtered = rows;
 
-  const pendingCount = rows.filter((r) => r.status === "pending").length;
-  const mineCount = rows.filter((r) => r.employee_id === myEmployeeId).length;
-
-  async function submitRequest() {
-    if (!canSubmit) return;
-    if (!myEmployeeId) {
-      toast.error("No employee record found");
-      return;
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(r => r.status === statusFilter);
     }
-    if (!start || !end) {
-      toast.error("Please choose start and end dates");
-      return;
+    if (typeFilter !== "all") {
+      filtered = filtered.filter(r => r.type === typeFilter);
     }
-    if (end < start) {
-      toast.error("End date must be after start date");
-      return;
+    if (employeeFilter !== "all") {
+      filtered = filtered.filter(r => r.employee_id === employeeFilter);
     }
-    setSubmitting(true);
-    const { error } = await sb.from("time_off").insert({
-      org_id: orgId,
-      employee_id: myEmployeeId,
-      starts_at: start, // date column
-      ends_at: end,     // date column
-      type,
-      reason: reason.trim() || null,
-      status: "pending",
-    });
-    setSubmitting(false);
-    if (error) {
-      toast.error("Failed to submit", { description: error.message });
-      return;
-    }
-    toast.success("Request submitted");
-    setOpen(false);
-    setStart(""); setEnd(""); setReason(""); setType("vacation");
-  }
-
-  // ------- Persist approval/deny under RLS & reflect immediately -------
-  async function updateStatus(id: string, status: Row["status"]) {
-    if (!canApprove) return;
-    setUpdating((u) => ({ ...u, [id]: true }));
-
-    // Optimistic: update locally for snappy UX
-    const prev = [...rows];
-    setRows((cur) => cur.map((r) => (r.id === id ? { ...r, status } : r)));
-
-    // Force-return one row; use org filter so RLS matches
-    const { data, error } = await sb
-      .from("time_off")
-      .update({ status })
-      .eq("id", id)
-      .eq("org_id", orgId!)
-      .select("id, status")
-      .maybeSingle(); // <-- avoids “Cannot coerce...” when 0 rows
-
-    if (error || !data) {
-      setRows(prev); // rollback
-      toast.error("Failed to update", {
-        description: error?.message || "No matching row updated (check RLS / org_id).",
-      });
-    } else {
-      // If currently filtering by Pending, remove from view after approval/deny
-      if (statusFilter === "pending") {
-        setRows((cur) => cur.filter((r) => r.id !== id));
-      } else {
-        setRows((cur) => cur.map((r) => (r.id === id ? { ...r, status: data.status } : r)));
-      }
-      toast.success(`Request ${status}`);
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(r =>
+        r.employees?.full_name?.toLowerCase().includes(query) ||
+        r.reason?.toLowerCase().includes(query)
+      );
     }
 
-    setUpdating((u) => ({ ...u, [id]: false }));
-  }
+    return filtered;
+  }, [rows, statusFilter, typeFilter, employeeFilter, searchQuery]);
 
-  async function cancelMine(id: string) {
-    const target = rows.find((r) => r.id === id);
-    if (!target || target.employee_id !== myEmployeeId || target.status !== "pending") return;
-    const prev = [...rows];
-    setRows((cur) => cur.filter((r) => r.id !== id));
+  // Statistics
+  const stats = React.useMemo(() => {
+    const total = rows.length;
+    const pending = rows.filter(r => r.status === 'pending').length;
+    const approved = rows.filter(r => r.status === 'approved').length;
+    const denied = rows.filter(r => r.status === 'denied').length;
+
+    const thisMonth = rows.filter(r => {
+      const created = new Date(r.created_at || r.starts_at);
+      const now = new Date();
+      return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+    }).length;
+
+    return { total, pending, approved, denied, thisMonth };
+  }, [rows]);
+
+  async function updateRequestStatus(requestId: string, status: 'approved' | 'denied') {
+    if (!canManage) return;
+
     const { error } = await sb
       .from("time_off")
-      .delete()
-      .eq("id", id)
-      .eq("org_id", orgId!); // scope delete for RLS
+      .update({ status })
+      .eq("id", requestId);
+
     if (error) {
-      setRows(prev);
-      toast.error("Failed to cancel", { description: error.message });
-    } else {
-      toast.success("Request canceled");
+      toast.error(`Failed to ${status === 'approved' ? 'approve' : 'deny'} request`);
+      return;
     }
+
+    toast.success(`Request ${status === 'approved' ? 'approved' : 'denied'}`);
+    void loadData();
   }
 
   if (loading || !orgId) {
     return (
-      <div className="flex items-center gap-2 text-sm text-slate-500">
-        <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex items-center gap-3 text-slate-600">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span className="text-lg font-medium">Loading time off requests...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-5">
-      {/* Header / Actions */}
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-xl font-semibold">Time Off</h1>
-        <div className="ml-auto" />
-        {canSubmit && (
-          <Button className="gap-2" onClick={() => setOpen(true)}>
-            <Plus className="h-4 w-4" /> New request
-          </Button>
-        )}
-      </div>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+      >
+        <div>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 via-blue-700 to-indigo-700 bg-clip-text text-transparent">
+            Time Off Management
+          </h1>
+          <p className="text-slate-600 mt-1">Manage employee time off requests and approvals</p>
+        </div>
 
-      {/* Quick stats */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="p-4">
-          <div className="text-sm text-slate-500">Pending requests</div>
-          <div className="mt-1 text-2xl font-semibold">{pendingCount}</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-sm text-slate-500">My requests</div>
-          <div className="mt-1 text-2xl font-semibold">{mineCount}</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-sm text-slate-500">Total in org</div>
-          <div className="mt-1 text-2xl font-semibold">{rows.length}</div>
-        </Card>
-      </div>
+        <div className="flex items-center gap-3">
+          {canManage && (
+            <>
+              <Button variant="outline" className="border-slate-300">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+              <Button
+                onClick={() => setRequestDialogOpen(true)}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Request
+              </Button>
+            </>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Statistics Cards */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
+        <StatsCard
+          title="Total Requests"
+          value={stats.total}
+          subtitle="All time requests"
+          icon={FileText}
+          color="text-blue-700"
+          trend={{ value: 12, label: "vs last month" }}
+        />
+        <StatsCard
+          title="Pending Approval"
+          value={stats.pending}
+          subtitle="Awaiting review"
+          icon={Clock}
+          color="text-amber-700"
+        />
+        <StatsCard
+          title="Approved"
+          value={stats.approved}
+          subtitle="Approved requests"
+          icon={Check}
+          color="text-emerald-700"
+        />
+        <StatsCard
+          title="This Month"
+          value={stats.thisMonth}
+          subtitle="Current month"
+          icon={Calendar}
+          color="text-purple-700"
+        />
+      </motion.div>
 
       {/* Filters */}
-      <Card className="p-3">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center">
-          <div className="flex items-center gap-2 text-sm text-slate-600">
-            <Filter className="h-4 w-4" /> Filters
-          </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="flex flex-col sm:flex-row gap-4 bg-white/95 p-4 rounded-xl border border-slate-200 shadow-sm"
+      >
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+          <Input
+            placeholder="Search requests..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 border-slate-300"
+          />
+        </div>
 
-          {(role === "admin" || role === "manager") && (
-            <Select value={scope} onValueChange={(v) => setScope(v as "mine" | "all")}>
-              <SelectTrigger className="w-[168px] bg-white"><SelectValue placeholder="Scope" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All employees</SelectItem>
-                <SelectItem value="mine">My requests</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)} >
-            <SelectTrigger className="w-[168px] bg-white"><SelectValue placeholder="Status" /></SelectTrigger>
+        <div className="flex gap-3">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[140px] border-slate-300">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="approved">Approved</SelectItem>
               <SelectItem value="denied">Denied</SelectItem>
             </SelectContent>
           </Select>
 
-          <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as any)}>
-            <SelectTrigger className="w-[168px] bg-white"><SelectValue placeholder="Type" /></SelectTrigger>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-[140px] border-slate-300">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All types</SelectItem>
+              <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="vacation">Vacation</SelectItem>
-              <SelectItem value="sick">Sick</SelectItem>
+              <SelectItem value="sick">Sick Leave</SelectItem>
+              <SelectItem value="personal">Personal</SelectItem>
               <SelectItem value="unpaid">Unpaid</SelectItem>
               <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>
 
-          <div className="md:ml-auto w-full md:w-[280px]">
-            <Input
-              placeholder="Search by name or reason…"
-              className="bg-white"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-        </div>
-      </Card>
-
-      {/* Mobile cards */}
-      <div className="grid gap-3 md:hidden">
-        {busy && (
-          <Card className="p-4 text-sm text-slate-500">
-            <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
-            Loading requests…
-          </Card>
-        )}
-        {!busy && filtered.length === 0 && (
-          <Card className="p-4 text-sm text-slate-500">No requests found.</Card>
-        )}
-        {!busy &&
-          filtered.map((r) => (
-            <Card key={r.id} className="p-4">
-              <div className="flex items-start gap-3">
-                <img
-                  src={r.employees?.avatar_url || "/avatar.svg"}
-                  alt=""
-                  className="h-10 w-10 rounded-full object-cover bg-slate-100"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="font-medium">{r.employees?.full_name || "Unknown"}</div>
-                    <TypeBadge type={r.type} />
-                    <StatusBadge status={r.status} />
-                  </div>
-                  <div className="mt-1 text-xs text-slate-500">
-                    {format(new Date(r.starts_at), "MMM d")} – {format(new Date(r.ends_at), "MMM d")}
-                  </div>
-                  {r.reason ? <div className="mt-2 text-sm text-slate-700">{r.reason}</div> : null}
-                </div>
-              </div>
-              <div className="mt-3 flex items-center justify-end gap-2">
-                {canApprove && r.status === "pending" && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => updateStatus(r.id, "approved")}
-                      disabled={!!updating[r.id]}
-                    >
-                      {updating[r.id] ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Check className="mr-1 h-4 w-4" />} Approve
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => updateStatus(r.id, "denied")}
-                      disabled={!!updating[r.id]}
-                    >
-                      {updating[r.id] ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <X className="mr-1 h-4 w-4" />} Deny
-                    </Button>
-                  </>
-                )}
-                {!canApprove && myEmployeeId === r.employee_id && r.status === "pending" && (
-                  <Button variant="outline" size="sm" onClick={() => cancelMine(r.id)} disabled={!!updating[r.id]}>
-                    <Trash2 className="mr-1 h-4 w-4" /> Cancel
-                  </Button>
-                )}
-              </div>
-            </Card>
-          ))}
-      </div>
-
-      {/* Desktop table */}
-      <Card className="hidden overflow-x-auto md:block">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Employee</TableHead>
-              <TableHead>Dates</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Reason</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {busy && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-sm text-slate-500">
-                  <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
-                  Loading requests…
-                </TableCell>
-              </TableRow>
-            )}
-            {!busy && filtered.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-sm text-slate-500">
-                  No requests found.
-                </TableCell>
-              </TableRow>
-            )}
-            {!busy &&
-              filtered.map((r) => (
-                <TableRow key={r.id} className="align-middle">
-                  <TableCell className="whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <img
-                        src={r.employees?.avatar_url || "/avatar.svg"}
-                        alt=""
-                        className="h-8 w-8 rounded-full object-cover bg-slate-100"
-                      />
-                      <span>{r.employees?.full_name || "Unknown"}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {format(new Date(r.starts_at), "MMM d")} – {format(new Date(r.ends_at), "MMM d")}
-                  </TableCell>
-                  <TableCell className="capitalize">
-                    <TypeBadge type={r.type} />
-                  </TableCell>
-                  <TableCell className="capitalize">
-                    <StatusBadge status={r.status} />
-                  </TableCell>
-                  <TableCell className="max-w-[360px] truncate">{r.reason}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="inline-flex items-center gap-2">
-                      {canApprove && r.status === "pending" && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => updateStatus(r.id, "approved")}
-                            disabled={!!updating[r.id]}
-                          >
-                            {updating[r.id] ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Check className="mr-1 h-4 w-4" />} Approve
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => updateStatus(r.id, "denied")}
-                            disabled={!!updating[r.id]}
-                          >
-                            {updating[r.id] ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <X className="mr-1 h-4 w-4" />} Deny
-                          </Button>
-                        </>
-                      )}
-                      {!canApprove && myEmployeeId === r.employee_id && r.status === "pending" && (
-                        <Button variant="outline" size="sm" onClick={() => cancelMine(r.id)} disabled={!!updating[r.id]}>
-                          <Trash2 className="mr-1 h-4 w-4" /> Cancel
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
+          <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
+            <SelectTrigger className="w-[160px] border-slate-300">
+              <SelectValue placeholder="Employee" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Employees</SelectItem>
+              {employees.map(emp => (
+                <SelectItem key={emp.id} value={emp.id}>{emp.full_name}</SelectItem>
               ))}
-          </TableBody>
-        </Table>
-      </Card>
+            </SelectContent>
+          </Select>
+        </div>
+      </motion.div>
 
-      {/* Create Request Dialog */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Request time off</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <label className="text-sm font-medium">Start date</label>
-                <Input
-                  type="date"
-                  value={start}
-                  onChange={(e) => setStart(e.target.value)}
-                  className="bg-white"
-                />
+      {/* Requests Table */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <Card className="bg-white/95 border-slate-200 shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-slate-800">
+              <Users className="h-5 w-5" />
+              Time Off Requests ({filteredRows.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {filteredRows.length === 0 ? (
+              <div className="text-center py-12">
+                <Calendar className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                <p className="text-lg font-medium text-slate-700 mb-2">No requests found</p>
+                <p className="text-slate-500">
+                  {searchQuery.trim() ? "Try adjusting your search terms" : "No time off requests yet"}
+                </p>
               </div>
-              <div>
-                <label className="text-sm font-medium">End date</label>
-                <Input
-                  type="date"
-                  value={end}
-                  min={start || undefined}
-                  onChange={(e) => setEnd(e.target.value)}
-                  className="bg-white"
-                />
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-slate-200">
+                      <TableHead className="text-slate-700 font-semibold">Employee</TableHead>
+                      <TableHead className="text-slate-700 font-semibold">Dates</TableHead>
+                      <TableHead className="text-slate-700 font-semibold">Type</TableHead>
+                      <TableHead className="text-slate-700 font-semibold">Duration</TableHead>
+                      <TableHead className="text-slate-700 font-semibold">Status</TableHead>
+                      <TableHead className="text-slate-700 font-semibold">Reason</TableHead>
+                      {canManage && <TableHead className="text-slate-700 font-semibold text-right">Actions</TableHead>}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <AnimatePresence>
+                      {filteredRows.map((row, index) => {
+                        const employee = row.employees;
+                        const days = differenceInDays(new Date(row.ends_at), new Date(row.starts_at)) + 1;
+
+                        return (
+                          <motion.tr
+                            key={row.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="border-slate-200 hover:bg-slate-50"
+                          >
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <Avatar className="h-8 w-8 border border-slate-200">
+                                  {employee?.avatar_url && <AvatarImage src={employee.avatar_url} />}
+                                  <AvatarFallback className="bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-700 text-xs font-semibold">
+                                    {employee?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?'}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="font-medium text-slate-900">{employee?.full_name || 'Unknown'}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm">
+                                <div className="font-medium text-slate-900">
+                                  {format(new Date(row.starts_at), 'MMM d')} - {format(new Date(row.ends_at), 'MMM d, yyyy')}
+                                </div>
+                                <div className="text-slate-500 text-xs">
+                                  {format(new Date(row.created_at || row.starts_at), 'MMM d, yyyy')} • Requested
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <TypeBadge type={row.type} />
+                            </TableCell>
+                            <TableCell>
+                              <span className="font-medium text-slate-900">
+                                {days} day{days > 1 ? 's' : ''}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <StatusBadge status={row.status} />
+                            </TableCell>
+                            <TableCell className="max-w-xs">
+                              <div className="text-sm text-slate-600 truncate" title={row.reason || ''}>
+                                {row.reason || <span className="italic text-slate-400">No reason provided</span>}
+                              </div>
+                            </TableCell>
+                            {canManage && (
+                              <TableCell className="text-right">
+                                {row.status === 'pending' && (
+                                  <div className="flex items-center justify-end gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => updateRequestStatus(row.id, 'approved')}
+                                      className="h-8 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                                    >
+                                      <Check className="h-3 w-3 mr-1" />
+                                      Approve
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => updateRequestStatus(row.id, 'denied')}
+                                      className="h-8 border-red-300 text-red-700 hover:bg-red-50"
+                                    >
+                                      <X className="h-3 w-3 mr-1" />
+                                      Deny
+                                    </Button>
+                                  </div>
+                                )}
+                              </TableCell>
+                            )}
+                          </motion.tr>
+                        );
+                      })}
+                    </AnimatePresence>
+                  </TableBody>
+                </Table>
               </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Type</label>
-              <Select value={type} onValueChange={(v) => setType(v as Row["type"])}>
-                <SelectTrigger className="bg-white"><SelectValue placeholder="Select type" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="vacation">Vacation</SelectItem>
-                  <SelectItem value="sick">Sick</SelectItem>
-                  <SelectItem value="unpaid">Unpaid</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Reason (optional)</label>
-              <Input
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="e.g., family event"
-                className="bg-white"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={submitRequest} disabled={submitting}>
-              {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting…</> : "Submit"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Request Form Dialog */}
+      <RequestForm
+        open={requestDialogOpen}
+        onOpenChange={setRequestDialogOpen}
+        onSuccess={loadData}
+        employees={employees}
+      />
     </div>
   );
 }

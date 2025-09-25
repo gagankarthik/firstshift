@@ -556,58 +556,89 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 p-4 lg:p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Settings className="h-6 w-6 text-blue-600" />
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Settings</h1>
-          </div>
-          <p className="text-gray-600">Manage your organization settings and configurations</p>
-        </div>
-
-        {org && (
-          <Card className="p-4">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
-              <div>
-                <div className="text-2xl font-bold text-blue-600">{orgStats.totalEmployees}</div>
-                <div className="text-xs text-gray-500">Employees</div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      <div className="space-y-6 p-4 lg:p-8 max-w-7xl mx-auto">
+      {/* Enhanced Header */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 lg:p-8">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-blue-100 rounded-xl">
+                <Settings className="h-7 w-7 text-blue-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-600">{orgStats.totalShifts}</div>
-                <div className="text-xs text-gray-500">Total Shifts</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-purple-600">{orgStats.activePositions}</div>
-                <div className="text-xs text-gray-500">Positions</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-amber-600">{orgStats.activeLocations}</div>
-                <div className="text-xs text-gray-500">Locations</div>
+                <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">Settings</h1>
+                <p className="text-gray-600 mt-1">Manage your organization settings and configurations</p>
               </div>
             </div>
-          </Card>
-        )}
+          </div>
+
+          {org && (
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 p-6 lg:min-w-[400px]">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Users className="h-4 w-4 text-blue-600" />
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold text-blue-600">{orgStats.totalEmployees}</div>
+                  <div className="text-xs text-gray-600 font-medium">Employees</div>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <Clock className="h-4 w-4 text-green-600" />
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold text-green-600">{orgStats.totalShifts}</div>
+                  <div className="text-xs text-gray-600 font-medium">Shifts</div>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <Briefcase className="h-4 w-4 text-purple-600" />
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold text-purple-600">{orgStats.activePositions}</div>
+                  <div className="text-xs text-gray-600 font-medium">Positions</div>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <div className="p-2 bg-amber-100 rounded-lg">
+                      <MapPin className="h-4 w-4 text-amber-600" />
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold text-amber-600">{orgStats.activeLocations}</div>
+                  <div className="text-xs text-gray-600 font-medium">Locations</div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <Tabs defaultValue="org" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 h-auto">
-          <TabsTrigger value="org" className="flex items-center gap-2 py-3">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 h-auto bg-white border border-gray-200 shadow-sm">
+          <TabsTrigger value="org" className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-200 font-medium">
             <Building2 className="h-4 w-4" />
             <span className="hidden sm:inline">Organization</span>
+            <span className="sm:hidden">Org</span>
           </TabsTrigger>
-          <TabsTrigger value="codes" className="flex items-center gap-2 py-3">
+          <TabsTrigger value="codes" className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 data-[state=active]:border-indigo-200 font-medium">
             <QrCode className="h-4 w-4" />
             <span className="hidden sm:inline">Join Codes</span>
+            <span className="sm:hidden">Codes</span>
           </TabsTrigger>
-          <TabsTrigger value="positions" className="flex items-center gap-2 py-3">
+          <TabsTrigger value="positions" className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700 data-[state=active]:border-purple-200 font-medium">
             <Briefcase className="h-4 w-4" />
             <span className="hidden sm:inline">Positions</span>
+            <span className="sm:hidden">Pos</span>
           </TabsTrigger>
-          <TabsTrigger value="locations" className="flex items-center gap-2 py-3">
+          <TabsTrigger value="locations" className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700 data-[state=active]:border-amber-200 font-medium">
             <MapPin className="h-4 w-4" />
             <span className="hidden sm:inline">Locations</span>
+            <span className="sm:hidden">Loc</span>
           </TabsTrigger>
         </TabsList>
 
@@ -720,17 +751,23 @@ export default function SettingsPage() {
 
         {/* Join Codes Tab */}
         <TabsContent value="codes" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <QrCode className="h-5 w-5 text-blue-600" />
-                Join Codes
-              </CardTitle>
-              <CardDescription>
-                Generate and manage invitation codes to let people join your organization
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Join Code Generator - Enhanced Card */}
+            <div className="lg:col-span-2">
+              <Card className="relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 opacity-50" />
+                <CardHeader className="relative">
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <QrCode className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <div className="text-xl font-bold text-gray-900">Join Codes</div>
+                      <div className="text-sm font-normal text-gray-600 mt-1">Invite people to your organization</div>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="relative space-y-6">
               {errors.codes && (
                 <Alert>
                   <AlertTriangle className="h-4 w-4" />
@@ -739,114 +776,139 @@ export default function SettingsPage() {
               )}
 
               {canManage && (
-                <div className="grid gap-4 lg:grid-cols-4">
-                  <div className="space-y-2">
-                    <Label>Role</Label>
-                    <Select value={genRole} onValueChange={(v: Role) => setGenRole(v)}>
-                      <SelectTrigger className="bg-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="employee">
-                          <div className="flex items-center gap-2">
-                            <Users className="h-4 w-4" />
-                            Employee
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="manager">
-                          <div className="flex items-center gap-2">
-                            <Shield className="h-4 w-4" />
-                            Manager
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="admin">
-                          <div className="flex items-center gap-2">
-                            <Settings className="h-4 w-4" />
-                            Admin
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-blue-100">
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="space-y-3">
+                      <Label className="text-sm font-semibold text-gray-700">Role</Label>
+                      <Select value={genRole} onValueChange={(v: Role) => setGenRole(v)}>
+                        <SelectTrigger className="bg-white border-gray-200 hover:border-blue-300 transition-colors">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          <SelectItem value="employee">
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4 text-gray-500" />
+                              <span>Employee</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="manager">
+                            <div className="flex items-center gap-2">
+                              <Shield className="h-4 w-4 text-orange-500" />
+                              <span>Manager</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="admin">
+                            <div className="flex items-center gap-2">
+                              <Settings className="h-4 w-4 text-red-500" />
+                              <span>Admin</span>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Max Uses</Label>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={100}
-                      value={genMaxUses}
-                      onChange={(e) => setGenMaxUses(parseInt(e.target.value || "1"))}
-                      placeholder="5"
-                    />
-                  </div>
+                    <div className="space-y-3">
+                      <Label className="text-sm font-semibold text-gray-700">Max Uses</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={genMaxUses}
+                        onChange={(e) => setGenMaxUses(parseInt(e.target.value || "1"))}
+                        placeholder="5"
+                        className="bg-white border-gray-200 hover:border-blue-300 transition-colors"
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Expires In (hours)</Label>
-                    <Select value={genMinutes.toString()} onValueChange={(v) => setGenMinutes(parseInt(v))}>
-                      <SelectTrigger className="bg-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="60">1 hour</SelectItem>
-                        <SelectItem value="360">6 hours</SelectItem>
-                        <SelectItem value="720">12 hours</SelectItem>
-                        <SelectItem value="1440">1 day</SelectItem>
-                        <SelectItem value="4320">3 days</SelectItem>
-                        <SelectItem value="10080">1 week</SelectItem>
-                        <SelectItem value="43200">1 month</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <div className="space-y-3">
+                      <Label className="text-sm font-semibold text-gray-700">Expires In</Label>
+                      <Select value={genMinutes.toString()} onValueChange={(v) => setGenMinutes(parseInt(v))}>
+                        <SelectTrigger className="bg-white border-gray-200 hover:border-blue-300 transition-colors">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          <SelectItem value="60">1 hour</SelectItem>
+                          <SelectItem value="360">6 hours</SelectItem>
+                          <SelectItem value="720">12 hours</SelectItem>
+                          <SelectItem value="1440">1 day</SelectItem>
+                          <SelectItem value="4320">3 days</SelectItem>
+                          <SelectItem value="10080">1 week</SelectItem>
+                          <SelectItem value="43200">1 month</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  <div className="flex items-end">
-                    <Button onClick={generateCode} disabled={genBusy} className="w-full gap-2">
-                      {genBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
-                      {genBusy ? "Generating..." : "Generate Code"}
-                    </Button>
+                    <div className="flex items-end">
+                      <Button
+                        onClick={generateCode}
+                        disabled={genBusy}
+                        className="w-full gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                      >
+                        {genBusy ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCcw className="h-4 w-4" />
+                        )}
+                        {genBusy ? "Generating..." : "Generate Code"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
 
               {!canManage && (
-                <Alert>
-                  <Info className="h-4 w-4" />
-                  <AlertDescription>Only admins and managers can generate join codes</AlertDescription>
-                </Alert>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
+                  <div className="inline-flex items-center justify-center p-3 bg-amber-100 rounded-full mb-4">
+                    <Shield className="h-6 w-6 text-amber-600" />
+                  </div>
+                  <h3 className="font-semibold text-amber-900 mb-2">Permission Required</h3>
+                  <p className="text-amber-700 text-sm">Only admins and managers can generate join codes for this organization.</p>
+                </div>
               )}
 
-              <Separator />
+              <Separator className="my-6" />
 
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Active Codes</h3>
-                <div className="flex items-center gap-2">
-                  <Switch id="show-expired" checked={showExpiredCodes} onCheckedChange={setShowExpiredCodes} />
-                  <Label htmlFor="show-expired" className="text-sm">
-                    Show expired
-                  </Label>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Active Join Codes</h3>
+                  <p className="text-sm text-gray-600 mt-1">Manage your organization's invitation codes</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <Switch id="show-expired" checked={showExpiredCodes} onCheckedChange={setShowExpiredCodes} />
+                    <Label htmlFor="show-expired" className="text-sm font-medium text-gray-700">
+                      Show expired codes
+                    </Label>
+                  </div>
                 </div>
               </div>
 
-              <div className="rounded-lg border bg-white">
+              <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Code</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Usage</TableHead>
-                      <TableHead>Expires</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                  <TableHeader className="bg-gray-50">
+                    <TableRow className="border-b border-gray-200">
+                      <TableHead className="font-semibold text-gray-900">Code</TableHead>
+                      <TableHead className="font-semibold text-gray-900">Role</TableHead>
+                      <TableHead className="font-semibold text-gray-900">Usage</TableHead>
+                      <TableHead className="font-semibold text-gray-900">Expires</TableHead>
+                      <TableHead className="font-semibold text-gray-900">Status</TableHead>
+                      <TableHead className="text-right font-semibold text-gray-900">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredCodes.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8">
-                          <QrCode className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                          <div className="text-sm font-medium text-gray-900">No join codes found</div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {canManage ? "Generate a code to get started" : "Ask an admin to create codes"}
+                        <TableCell colSpan={6} className="text-center py-12">
+                          <div className="flex flex-col items-center">
+                            <div className="p-4 bg-gray-100 rounded-full mb-4">
+                              <QrCode className="h-8 w-8 text-gray-400" />
+                            </div>
+                            <div className="text-base font-medium text-gray-900 mb-2">No join codes found</div>
+                            <div className="text-sm text-gray-500 max-w-sm">
+                              {canManage
+                                ? "Generate your first invite code to start adding team members"
+                                : "Ask an admin to create invitation codes for new members"}
+                            </div>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -858,16 +920,35 @@ export default function SettingsPage() {
                         return (
                           <TableRow
                             key={code.id}
-                            className={cn("transition-colors", !code.active && "opacity-60", isExpired && "bg-red-50")}
+                            className={cn(
+                              "transition-colors hover:bg-gray-50",
+                              !code.active && "opacity-60",
+                              isExpired && "bg-red-50 hover:bg-red-100"
+                            )}
                           >
                             <TableCell>
-                              <div className="flex items-center gap-2">
-                                <code className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{code.code}</code>
-                                {!code.active && <XCircle className="h-4 w-4 text-red-500" />}
+                              <div className="flex items-center gap-3">
+                                <code className="font-mono text-sm bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-200 font-semibold">
+                                  {code.code}
+                                </code>
+                                {!code.active && (
+                                  <div className="flex items-center gap-1">
+                                    <XCircle className="h-4 w-4 text-red-500" />
+                                    <span className="text-xs text-red-600 font-medium">Inactive</span>
+                                  </div>
+                                )}
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Badge variant="outline" className="capitalize">
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "capitalize font-medium",
+                                  code.role === "admin" && "bg-red-50 text-red-700 border-red-200",
+                                  code.role === "manager" && "bg-orange-50 text-orange-700 border-orange-200",
+                                  code.role === "employee" && "bg-blue-50 text-blue-700 border-blue-200"
+                                )}
+                              >
                                 {code.role}
                               </Badge>
                             </TableCell>
@@ -876,11 +957,13 @@ export default function SettingsPage() {
                                 <span className="text-sm">
                                   {code.used_count} / {code.max_uses}
                                 </span>
-                                <div className="w-16 bg-gray-200 rounded-full h-2">
+                                <div className="w-20 bg-gray-200 rounded-full h-2.5">
                                   <div
                                     className={cn(
-                                      "h-2 rounded-full transition-all",
-                                      code.used_count >= code.max_uses ? "bg-red-500" : "bg-blue-500"
+                                      "h-2.5 rounded-full transition-all duration-300",
+                                      code.used_count >= code.max_uses
+                                        ? "bg-gradient-to-r from-red-500 to-red-600"
+                                        : "bg-gradient-to-r from-blue-500 to-blue-600"
                                     )}
                                     style={{ width: `${Math.min(100, (code.used_count / code.max_uses) * 100)}%` }}
                                   />
@@ -900,12 +983,28 @@ export default function SettingsPage() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Badge variant={status.color}>{status.text}</Badge>
+                              <Badge
+                                variant={status.color}
+                                className={cn(
+                                  "font-medium",
+                                  status.color === "default" && "bg-green-50 text-green-700 border-green-200 hover:bg-green-100",
+                                  status.color === "destructive" && "bg-red-50 text-red-700 border-red-200 hover:bg-red-100",
+                                  status.color === "secondary" && "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+                                )}
+                              >
+                                {status.text}
+                              </Badge>
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center gap-1 justify-end">
-                                <Button variant="ghost" size="sm" onClick={() => copyCode(code.code)} className="gap-1">
-                                  <Copy className="h-3 w-3" />
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => copyCode(code.code)}
+                                  className="gap-1 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                  <span className="hidden sm:inline">Copy</span>
                                 </Button>
 
                                 {canManage && (
@@ -914,19 +1013,34 @@ export default function SettingsPage() {
                                       variant="ghost"
                                       size="sm"
                                       onClick={() => toggleCodeStatus(code.id, code.active)}
-                                      className="gap-1"
+                                      className={cn(
+                                        "gap-1 transition-colors",
+                                        code.active
+                                          ? "hover:bg-red-50 hover:text-red-700"
+                                          : "hover:bg-green-50 hover:text-green-700"
+                                      )}
                                     >
-                                      {code.active ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                                      {code.active ? (
+                                        <>
+                                          <EyeOff className="h-4 w-4" />
+                                          <span className="hidden sm:inline">Disable</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Eye className="h-4 w-4" />
+                                          <span className="hidden sm:inline">Enable</span>
+                                        </>
+                                      )}
                                     </Button>
 
                                     <Button
                                       variant="ghost"
                                       size="sm"
                                       onClick={() => deleteCode(code.id)}
-                                      className="gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                      className="gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
                                     >
-                                      <Trash2 className="h-3 w-3" />
-                                      Delete
+                                      <Trash2 className="h-4 w-4" />
+                                      <span className="hidden sm:inline">Delete</span>
                                     </Button>
                                   </>
                                 )}
@@ -939,8 +1053,118 @@ export default function SettingsPage() {
                   </TableBody>
                 </Table>
               </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+            </div>
+
+            {/* Organization Quick Info - Enhanced Sidebar */}
+            <div className="lg:col-span-1 space-y-6">
+              {org && (
+                <Card className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Building2 className="h-5 w-5 text-gray-600" />
+                      Organization Info
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                        <div>
+                          <div className="text-sm font-medium text-gray-600">Name</div>
+                          <div className="font-semibold text-gray-900">{org.name}</div>
+                        </div>
+                        <Building2 className="h-5 w-5 text-blue-500" />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                          <div>
+                            <div className="text-xs font-medium text-gray-500">Employees</div>
+                            <div className="text-lg font-bold text-blue-600">{orgStats.totalEmployees}</div>
+                          </div>
+                          <Users className="h-4 w-4 text-blue-500" />
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                          <div>
+                            <div className="text-xs font-medium text-gray-500">Shifts</div>
+                            <div className="text-lg font-bold text-green-600">{orgStats.totalShifts}</div>
+                          </div>
+                          <Clock className="h-4 w-4 text-green-500" />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                          <div>
+                            <div className="text-xs font-medium text-gray-500">Positions</div>
+                            <div className="text-lg font-bold text-purple-600">{orgStats.activePositions}</div>
+                          </div>
+                          <Briefcase className="h-4 w-4 text-purple-500" />
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                          <div>
+                            <div className="text-xs font-medium text-gray-500">Locations</div>
+                            <div className="text-lg font-bold text-amber-600">{orgStats.activeLocations}</div>
+                          </div>
+                          <MapPin className="h-4 w-4 text-amber-500" />
+                        </div>
+                      </div>
+
+                      {org.created_at && (
+                        <div className="p-3 bg-white rounded-lg border">
+                          <div className="text-xs font-medium text-gray-500 mb-1">Created</div>
+                          <div className="text-sm font-medium text-gray-700">
+                            {new Date(org.created_at).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Quick Actions Card */}
+              <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg text-blue-900">
+                    <Shield className="h-5 w-5 text-blue-600" />
+                    Quick Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-2 bg-white hover:bg-blue-50 border-blue-200 hover:border-blue-300 text-blue-700"
+                    onClick={() => window.open('/dashboard/employees', '_blank')}
+                  >
+                    <Users className="h-4 w-4" />
+                    View Employees
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-2 bg-white hover:bg-blue-50 border-blue-200 hover:border-blue-300 text-blue-700"
+                    onClick={() => window.open('/dashboard/schedule', '_blank')}
+                  >
+                    <Clock className="h-4 w-4" />
+                    View Schedule
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-2 bg-white hover:bg-blue-50 border-blue-200 hover:border-blue-300 text-blue-700"
+                    onClick={() => loadAllData()}
+                  >
+                    <RefreshCcw className="h-4 w-4" />
+                    Refresh Data
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* Positions Tab */}
@@ -1193,6 +1417,7 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

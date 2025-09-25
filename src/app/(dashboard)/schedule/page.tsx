@@ -760,22 +760,22 @@ export default function SchedulePage() {
   if (loading || !orgId) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex items-center gap-3 text-gray-500">
+        <div className="flex items-center gap-3 text-slate-600">
           <Loader2 className="h-6 w-6 animate-spin" />
-          <span className="text-lg">Loading schedule...</span>
+          <span className="text-lg font-medium">Loading schedule...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="mx-auto px-6 py-6 max-w-7xl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-7xl">
         {/* Page Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Schedule</h1>
-            <p className="text-sm text-gray-600 mt-1">
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-slate-800 via-blue-700 to-indigo-700 bg-clip-text text-transparent">Schedule</h1>
+            <p className="text-sm sm:text-base text-slate-600 mt-1">
               {format(weekDays[0], "MMM d")} - {format(weekDays[6], "MMM d, yyyy")}
             </p>
           </div>
@@ -786,16 +786,18 @@ export default function SchedulePage() {
               variant="outline"
               size="sm"
               onClick={() => setWeekStart(addDays(weekStart, -7))}
+              className="border-slate-300 hover:bg-slate-50 text-slate-700"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="text-sm font-medium px-3 py-1 bg-white rounded border">
+            <div className="text-sm font-medium px-3 py-2 bg-white rounded-lg border border-slate-200 shadow-sm">
               {format(weekDays[0], "MMM d")} - {format(weekDays[6], "MMM d")}
             </div>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setWeekStart(addDays(weekStart, +7))}
+              className="border-slate-300 hover:bg-slate-50 text-slate-700"
             >
               <ArrowRight className="h-4 w-4" />
             </Button>
@@ -803,43 +805,53 @@ export default function SchedulePage() {
         </div>
 
         {/* Action Bar */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           {/* Search and Filters */}
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <div className="relative flex-1 sm:flex-none">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
               <Input
                 placeholder="Search employees..."
-                className="pl-10 w-64"
+                className="pl-10 w-full sm:w-64 border-slate-300 focus:border-blue-500 focus:ring-blue-500/20"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
               />
             </div>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Filter className="h-4 w-4" />
+            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex border-slate-300 hover:bg-slate-50 text-slate-700 h-8 px-3 text-sm">
+              <Filter className="h-3 w-3" />
               Filter
             </Button>
-          </div>
+            <Button variant="outline" size="sm" className="sm:hidden border-slate-300 hover:bg-slate-50 text-slate-700 h-8 w-8 p-0">
+              <Filter className="h-3 w-3" />
+            </Button>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setViewOpen(true)}
-              className="gap-2"
+              className="gap-1.5 hidden sm:flex border-slate-300 hover:bg-slate-50 text-slate-700 h-8 px-3 text-sm"
             >
-              <Eye className="h-4 w-4" />
+              <Eye className="h-3 w-3" />
               View
             </Button>
-            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setViewOpen(true)}
+              className="sm:hidden border-slate-300 hover:bg-slate-50 text-slate-700 h-8 w-8 p-0"
+            >
+              <Eye className="h-3 w-3" />
+            </Button>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Download className="h-4 w-4" />
-                  Export
-                  <ChevronDown className="h-3 w-3" />
+                <Button variant="outline" size="sm" className="gap-1.5 border-slate-300 hover:bg-slate-50 text-slate-700 h-8 px-3 text-sm">
+                  <Download className="h-3 w-3" />
+                  <span className="hidden sm:inline">Export</span>
+                  <ChevronDown className="h-2.5 w-2.5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -853,8 +865,7 @@ export default function SchedulePage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <div className="ml-auto">
-              
+
             {canManage && (
               <Button
                 size="sm"
@@ -862,14 +873,14 @@ export default function SchedulePage() {
                   dlg.reset({});
                   dlg.setOpen(true);
                 }}
-                className="gap-2"
+                className="gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-200 h-8 px-3 text-sm"
               >
-                <Plus className="h-4 w-4" />
-                Add Shift
+                <Plus className="h-3 w-3" />
+                <span className="hidden sm:inline">Add Shift</span>
               </Button>
             )}
-            </div>
           </div>
+        </div>
         
 
         {/* Main Schedule Grid with Drag & Drop */}
@@ -963,24 +974,27 @@ export default function SchedulePage() {
         />
 
         {/* Print View (Hidden) */}
-        <div className={`print-only ${printMode ? "block" : "hidden"}`}>
-          <div className="p-6">
-            <div className="mb-6 text-center">
-              <h1 className="text-2xl font-bold">Employee Schedule</h1>
-              <p className="text-gray-600">
+        <div className={`print-only ${printMode ? "block" : "hidden"} bg-white`}>
+          <div className="p-4">
+            <div className="mb-4 text-center border-b border-slate-300 pb-4">
+              <h1 className="text-xl font-bold text-slate-800">Employee Schedule Report</h1>
+              <p className="text-slate-600 text-sm mt-1">
                 {format(new Date(exportStart), "MMMM d")} – {format(new Date(exportEnd), "MMMM d, yyyy")}
+              </p>
+              <p className="text-xs text-slate-500 mt-2">
+                Generated on {format(new Date(), "MMMM d, yyyy 'at' h:mm a")}
               </p>
             </div>
 
-            <table className="w-full text-sm border-collapse border">
-              <thead>
+            <table className="w-full text-xs border-collapse border border-slate-400">
+              <thead className="bg-slate-100">
                 <tr>
-                  <th className="border p-2 font-bold text-left w-[150px]">Employee</th>
+                  <th className="border border-slate-400 p-2 font-bold text-left w-[140px] text-slate-800">Employee</th>
                   {eachDayISO(exportStart, exportEnd).map((dayISO) => (
-                    <th key={dayISO} className="border p-2 text-center font-bold">
+                    <th key={dayISO} className="border border-slate-400 p-1.5 text-center font-bold text-slate-800">
                       <div>
-                        <div>{format(new Date(dayISO), "EEE")}</div>
-                        <div className="text-xs font-normal">{format(new Date(dayISO), "MMM d")}</div>
+                        <div className="font-semibold">{format(new Date(dayISO), "EEE")}</div>
+                        <div className="text-xs font-normal text-slate-600">{format(new Date(dayISO), "MMM d")}</div>
                       </div>
                     </th>
                   ))}

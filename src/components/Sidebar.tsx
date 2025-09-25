@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
   CalendarCheck,
@@ -55,22 +56,64 @@ function NavItem({ href, label, icon: Icon, onClick }: {
       href={href}
       onClick={onClick}
       aria-current={active ? "page" : undefined}
-      className={cn(
-        "group flex items-center gap-3 rounded-xl px-3 py-2 text-sm outline-none transition-colors",
-        active
-          ? "bg-indigo-50 text-indigo-700 ring-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-300 dark:ring-indigo-900"
-          : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/60"
-      )}
+      className="block relative"
     >
-      <Icon
+      <motion.div
+        whileHover={{ scale: 1.02, x: 4 }}
+        whileTap={{ scale: 0.98 }}
         className={cn(
-          "h-4 w-4 transition-colors",
+          "group flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 relative overflow-hidden",
           active
-            ? "text-indigo-600 dark:text-indigo-300"
-            : "text-slate-500 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-200"
+            ? "bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-lg border border-blue-200"
+            : "text-slate-600 hover:bg-slate-50 hover:text-slate-800 backdrop-blur-sm"
         )}
-      />
-      <span className="truncate">{label}</span>
+      >
+        {/* Animated background for active state */}
+        <AnimatePresence>
+          {active && (
+            <motion.div
+              layoutId="activeNavBg"
+              className="absolute inset-0 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+            />
+          )}
+        </AnimatePresence>
+
+        <div className="relative z-10 flex items-center gap-3">
+          <motion.div
+            animate={{
+              rotate: active ? 360 : 0,
+              scale: active ? 1.1 : 1,
+            }}
+            transition={{ type: "spring", stiffness: 200, damping: 20 }}
+          >
+            <Icon
+              className={cn(
+                "h-5 w-5 transition-colors duration-300",
+                active
+                  ? "text-blue-600"
+                  : "text-slate-500 group-hover:text-blue-600"
+              )}
+            />
+          </motion.div>
+          <span className={cn(
+            "truncate transition-all duration-300",
+            active ? "font-semibold" : "font-medium"
+          )}>
+            {label}
+          </span>
+        </div>
+
+        {/* Hover indicator */}
+        <motion.div
+          className="absolute right-2 w-1 h-6 bg-gradient-to-b from-blue-500 to-indigo-500 rounded-full opacity-0 group-hover:opacity-100"
+          animate={{ opacity: active ? 1 : 0 }}
+          transition={{ duration: 0.2 }}
+        />
+      </motion.div>
     </Link>
   );
 }
@@ -78,73 +121,84 @@ function NavItem({ href, label, icon: Icon, onClick }: {
 // ----------------- Sidebar Panel -----------------
 function SidebarPanel({ onItemClick }: { onItemClick?: () => void }) {
   return (
-    <div className="flex h-full w-[264px] flex-col bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:bg-slate-950/40">
-      {/* Brand Row */}
-      <div className="flex items-center justify-between px-4 py-4">
-        <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo.svg" alt="FirstShift" width={132} height={32} />
+    <div className="flex h-full w-full flex-col bg-white/95 backdrop-blur-xl overflow-hidden border-r border-slate-200">
+      {/* Enhanced Brand Section - Fixed */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex-shrink-0 flex items-center px-4 py-5 border-b border-slate-200"
+      >
+        <Link href="/" className="flex items-center gap-3 group">
+         <Image src="/logo.svg" alt="FirstShift Logo" width={120} height={28} className="rounded-full" />
         </Link>
+      </motion.div>
+
+      {/* Enhanced Navigation - Scrollable */}
+      <div className="flex-1 overflow-y-auto scrollbar-hide">
+        <div className="py-4 px-3">
+          <nav className="space-y-5">
+            {/* Main Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.6 }}
+            >
+              <h3 className="px-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                <div className="h-0.5 w-4 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"></div>
+                Workspace
+              </h3>
+              <div className="space-y-0.5">
+                {NAV_MAIN.map((item, index) => (
+                  <motion.div
+                    key={item.href}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 + index * 0.05, duration: 0.4 }}
+                  >
+                    <NavItem {...item} onClick={onItemClick} />
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* General Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
+            >
+              <h3 className="px-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                <div className="h-0.5 w-4 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"></div>
+                General
+              </h3>
+              <div className="space-y-0.5">
+                {NAV_GENERAL.map((item, index) => (
+                  <motion.div
+                    key={item.href}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5 + index * 0.05, duration: 0.4 }}
+                  >
+                    <NavItem {...item} onClick={onItemClick} />
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Extra space at bottom for better scrolling */}
+            <div className="h-4"></div>
+          </nav>
+        </div>
       </div>
-      <Separator />
-
-      <ScrollArea className="flex-1 px-3 py-3">
-        <div className="px-2 text-[11px] uppercase tracking-wide text-slate-400">Menu</div>
-        <div className="mt-2 space-y-1">
-          {NAV_MAIN.map((i) => (
-            <NavItem key={i.href} {...i} onClick={onItemClick} />
-          ))}
-        </div>
-
-        <div className="mt-6 px-2 text-[11px] uppercase tracking-wide text-slate-400">General</div>
-        <div className="mt-2 space-y-1">
-          {NAV_GENERAL.map((i) => (
-            <NavItem key={i.href} {...i} onClick={onItemClick} />
-          ))}
-        </div>
-      </ScrollArea>
-
-
     </div>
   );
 }
 
 // ----------------- Root Sidebar -----------------
 export default function Sidebar() {
-  const [open, setOpen] = useState(false);
-
   return (
-    <>
-      {/* Mobile trigger */}
-      <div className="sticky top-0 z-40 bg-gradient-to-r from-white via-indigo-50 to-fuchsia-50/70 backdrop-blur md:hidden">
-        <div className="flex items-center justify-between border-b px-3 py-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setOpen(true)}
-            aria-label="Open menu"
-            className="border-indigo-200 text-slate-700 hover:bg-indigo-50"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-          <div className="text-sm font-semibold text-slate-800">FirstShift</div>
-          <div className="w-10" />
-        </div>
-      </div>
-
-      {/* Mobile sheet */}
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="left" className="w-[288px] p-0">
-          <SidebarPanel onItemClick={() => setOpen(false)} />
-        </SheetContent>
-        <SheetTrigger asChild>
-          <span className="hidden" />
-        </SheetTrigger>
-      </Sheet>
-
-      {/* Desktop rail */}
-      <aside className="sticky top-0 hidden h-screen w-[260px] border-r bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 md:flex dark:bg-slate-950/40">
-        <SidebarPanel />
-      </aside>
-    </>
+    <aside className="h-full">
+      <SidebarPanel />
+    </aside>
   );
 }
