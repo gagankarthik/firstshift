@@ -20,6 +20,7 @@ import {
 import { Search, ChevronDown, UserRound, Building2, Menu, Bell, Settings, LogOut, LayoutDashboard, CalendarCheck, Users2, Clock3, Radio, FileBarChart2, BookOpen, Newspaper, HelpCircle } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Sidebar from "@/components/Sidebar";
+import Image from "next/image";
 
 // ----------------- Topbar Component -----------------
 
@@ -125,11 +126,8 @@ export default function DashboardTopbar() {
               {/* Enhanced Brand Row - Fixed */}
               <div className="flex-shrink-0 flex items-center px-6 py-6 border-b border-slate-200">
                 <Link href="/" className="flex items-center gap-3 group">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300">
-                    <span className="text-white font-bold text-lg">FS</span>
-                  </div>
-                  <span className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">FirstShift</span>
-                </Link>
+                 <Image src="/logo.svg" alt="FirstShift Logo" width={132} height={32} className="h-8 w-8 rounded-md bg-gradient-to-br from-violet-500/20 to-purple-500/20 p-1 ring-1 ring-white/30 group-hover:from-violet-500/30 group-hover:to-purple-500/30 transition-colors" />
+                 </Link>
               </div>
 
 
@@ -212,7 +210,6 @@ export default function DashboardTopbar() {
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full border border-blue-200 backdrop-blur-xl">
                 <Building2 className="h-3.5 w-3.5 text-blue-600" />
                 <span className="text-sm font-medium text-blue-700 truncate max-w-[200px]">{displayOrg}</span>
-                <div className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
               </div>
             
           </div>

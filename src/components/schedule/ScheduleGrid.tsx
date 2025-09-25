@@ -48,55 +48,64 @@ export function ScheduleGrid({
 
   return (
     <>
-      {/* Desktop View */}
+      {/* Enhanced Desktop View */}
       <div className="hidden lg:block">
-        <Card className="overflow-hidden shadow-sm border">
+        <Card className="overflow-hidden shadow-lg border-0 bg-white/80 backdrop-blur-sm rounded-2xl">
           {/* Fixed container to prevent horizontal overflow */}
           <div className="w-full overflow-hidden">
             <div className="overflow-x-auto">
               {/* Set a fixed minimum width for the table */}
-              <div style={{ minWidth: `${220 + (weekDays.length * 180)}px` }}>
+              <div style={{ minWidth: `${240 + (weekDays.length * 200)}px` }}>
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-gray-50 border-b-2">
-                      <TableHead 
-                        className="sticky left-0 z-20 bg-gray-50 font-semibold text-gray-900 py-4 border-r"
-                        style={{ width: '220px', minWidth: '220px', maxWidth: '220px' }}
+                    <TableRow className="bg-gradient-to-r from-slate-50 via-blue-50 to-indigo-50 border-b-2 border-slate-200">
+                      <TableHead
+                        className="sticky left-0 z-20 bg-gradient-to-r from-slate-50 via-blue-50 to-indigo-50 font-bold text-slate-800 py-6 border-r border-slate-200 shadow-sm"
+                        style={{ width: '240px', minWidth: '240px', maxWidth: '240px' }}
                       >
-                        EMPLOYEE
+                        <div className="flex items-center gap-2">
+                          <svg className="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                          </svg>
+                          EMPLOYEES
+                        </div>
                       </TableHead>
-                      {weekDays.map((day) => (
-                        <TableHead 
-                          key={day.getTime()} 
-                          className="text-center font-semibold text-gray-900 py-4 border-r last:border-r-0"
-                          style={{ width: '180px', minWidth: '180px', maxWidth: '180px' }}
+                      {weekDays.map((day, index) => (
+                        <TableHead
+                          key={day.getTime()}
+                          className="text-center font-bold text-slate-800 py-6 border-r border-slate-200 last:border-r-0"
+                          style={{ width: '200px', minWidth: '200px', maxWidth: '200px' }}
                         >
-                          <div className="text-center">
-                            <div className="font-semibold text-sm">
+                          <div className="text-center space-y-1">
+                            <div className="font-bold text-sm tracking-wide">
                               {format(day, "EEE").toUpperCase()}
                             </div>
-                            <div className="text-xs text-gray-500 font-normal">
-                              {format(day, "MMM d").toUpperCase()}
+                            <div className="text-xs text-slate-600 font-medium bg-white/60 rounded-lg px-2 py-1 inline-block">
+                              {format(day, "MMM d")}
                             </div>
+                            {/* Today indicator */}
+                            {format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd") && (
+                              <div className="w-2 h-2 bg-blue-500 rounded-full mx-auto mt-1"></div>
+                            )}
                           </div>
                         </TableHead>
                       ))}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {/* Open Shifts Row */}
-                    <TableRow className="border-b bg-orange-50/30 hover:bg-orange-50/50 transition-colors">
-                      <TableCell 
-                        className="sticky left-0 z-10 bg-orange-50/30 hover:bg-orange-50/50 py-4 border-r"
-                        style={{ width: '220px', minWidth: '220px', maxWidth: '220px' }}
+                    {/* Enhanced Open Shifts Row */}
+                    <TableRow className="border-b border-slate-200 bg-gradient-to-r from-orange-50/40 via-amber-50/40 to-yellow-50/40 hover:from-orange-50/60 hover:via-amber-50/60 hover:to-yellow-50/60 transition-all duration-200">
+                      <TableCell
+                        className="sticky left-0 z-10 bg-gradient-to-r from-orange-50/40 via-amber-50/40 to-yellow-50/40 hover:from-orange-50/60 hover:via-amber-50/60 hover:to-yellow-50/60 py-6 border-r border-slate-200 shadow-sm"
+                        style={{ width: '240px', minWidth: '240px', maxWidth: '240px' }}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-orange-100 border border-orange-200 flex items-center justify-center flex-shrink-0">
-                            <CalendarIcon className="h-4 w-4 text-orange-600" />
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 flex items-center justify-center flex-shrink-0 shadow-md">
+                            <CalendarIcon className="h-5 w-5 text-white" />
                           </div>
-                          <div className="min-w-0">
-                            <div className="font-semibold text-gray-900 truncate">Open Shifts</div>
-                            <div className="text-xs text-gray-500 truncate">Unassigned</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-bold text-slate-900 text-base">Open Shifts</div>
+                            <div className="text-sm text-slate-600 mt-0.5">Available positions</div>
                           </div>
                         </div>
                       </TableCell>
@@ -105,10 +114,10 @@ export function ScheduleGrid({
                         const dayShifts = shiftsByEmpDay.get(dayKey) || [];
                         const id = cellId(OPEN_EMP_ID, day);
                         return (
-                          <TableCell 
-                            key={day.getTime()} 
-                            className="p-3 align-top border-r last:border-r-0"
-                            style={{ width: '180px', minWidth: '180px', maxWidth: '180px' }}
+                          <TableCell
+                            key={day.getTime()}
+                            className="p-4 align-top border-r border-slate-200 last:border-r-0"
+                            style={{ width: '200px', minWidth: '200px', maxWidth: '200px' }}
                           >
                             <DroppableCell
                               id={id}
@@ -135,28 +144,36 @@ export function ScheduleGrid({
                       })}
                     </TableRow>
 
-                    {/* Employee Rows */}
+                    {/* Enhanced Employee Rows */}
                     {employees.map((emp, index) => (
-                      <TableRow 
-                        key={emp.id} 
-                        className={`border-b hover:bg-gray-50/50 transition-colors ${
-                          index % 2 === 0 ? "bg-white" : "bg-gray-50/20"
+                      <TableRow
+                        key={emp.id}
+                        className={`border-b border-slate-200 hover:bg-slate-50/40 transition-all duration-200 ${
+                          index % 2 === 0 ? "bg-white/40" : "bg-slate-50/20"
                         }`}
                       >
-                        <TableCell 
-                          className="sticky left-0 z-10 bg-inherit py-4 border-r"
-                          style={{ width: '220px', minWidth: '220px', maxWidth: '220px' }}
+                        <TableCell
+                          className="sticky left-0 z-10 bg-inherit py-6 border-r border-slate-200 shadow-sm"
+                          style={{ width: '240px', minWidth: '240px', maxWidth: '240px' }}
                         >
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-4">
                             <div className="flex-shrink-0">
-                              <EmployeeAvatar employee={emp} size="md" />
+                              <EmployeeAvatar employee={emp} size="lg" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="font-semibold text-gray-900 truncate">
+                              <div className="font-bold text-slate-900 text-base truncate">
                                 {emp.full_name}
                               </div>
-                              <div className="text-xs text-gray-500 truncate">
-                                {emp.position?.name || "No position"}
+                              <div className="flex items-center gap-2 mt-1">
+                                <div className="text-sm text-slate-600 truncate">
+                                  {emp.position?.name || "No position"}
+                                </div>
+                                {emp.position?.color && (
+                                  <div
+                                    className="w-2 h-2 rounded-full flex-shrink-0"
+                                    style={{ backgroundColor: emp.position.color }}
+                                  />
+                                )}
                               </div>
                             </div>
                           </div>
@@ -171,10 +188,10 @@ export function ScheduleGrid({
                           const timeOffLabel = timeOffLabelFor(emp.id, day);
 
                           return (
-                            <TableCell 
-                              key={day.getTime()} 
-                              className="p-3 align-top border-r last:border-r-0"
-                              style={{ width: '180px', minWidth: '180px', maxWidth: '180px' }}
+                            <TableCell
+                              key={day.getTime()}
+                              className="p-4 align-top border-r border-slate-200 last:border-r-0"
+                              style={{ width: '200px', minWidth: '200px', maxWidth: '200px' }}
                             >
                               <DroppableCell
                                 id={id}
@@ -242,37 +259,40 @@ export function ScheduleGrid({
         </Card>
       </div>
 
-      {/* Mobile/Tablet View */}
-      <div className="lg:hidden space-y-4">
-        {/* Open Shifts Card */}
-        <Card className="overflow-hidden">
-          <div className="p-4 bg-orange-50 border-b">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-orange-100 border border-orange-200 flex items-center justify-center">
-                <CalendarIcon className="h-5 w-5 text-orange-600" />
+      {/* Enhanced Mobile/Tablet View */}
+      <div className="lg:hidden space-y-6">
+        {/* Enhanced Open Shifts Card */}
+        <Card className="overflow-hidden shadow-lg border-0 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 rounded-2xl">
+          <div className="p-6 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 border-b border-orange-200/50">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 flex items-center justify-center shadow-md">
+                <CalendarIcon className="h-6 w-6 text-white" />
               </div>
               <div>
-                <div className="font-semibold text-gray-900">Open Shifts</div>
-                <div className="text-xs text-gray-500">Unassigned</div>
+                <div className="font-bold text-slate-900 text-lg">Open Shifts</div>
+                <div className="text-sm text-slate-600 mt-0.5">Available positions</div>
               </div>
             </div>
           </div>
-          <div className="p-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {weekDays.map((day) => {
                 const dayKey = `${OPEN_EMP_ID}_${format(day, "yyyy-MM-dd")}`;
                 const dayShifts = shiftsByEmpDay.get(dayKey) || [];
                 const id = cellId(OPEN_EMP_ID, day);
                 
                 return (
-                  <div key={day.getTime()} className="space-y-2">
+                  <div key={day.getTime()} className="space-y-3">
                     <div className="text-center">
-                      <div className="font-medium text-sm text-gray-900">
-                        {format(day, "EEE")}
+                      <div className="font-bold text-sm text-slate-900">
+                        {format(day, "EEE").toUpperCase()}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-slate-600 bg-white/60 rounded-lg px-2 py-1 mt-1 inline-block">
                         {format(day, "MMM d")}
                       </div>
+                      {format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd") && (
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mx-auto mt-1"></div>
+                      )}
                     </div>
                     <DroppableCell
                       id={id}
@@ -303,24 +323,32 @@ export function ScheduleGrid({
           </div>
         </Card>
 
-        {/* Employee Cards */}
+        {/* Enhanced Employee Cards */}
         {employees.map((emp) => (
-          <Card key={emp.id} className="overflow-hidden">
-            <div className="p-4 bg-gray-50 border-b">
-              <div className="flex items-center gap-3">
-                <EmployeeAvatar employee={emp} size="md" />
+          <Card key={emp.id} className="overflow-hidden shadow-lg border-0 bg-white/80 backdrop-blur-sm rounded-2xl">
+            <div className="p-6 bg-gradient-to-r from-slate-50 to-blue-50 border-b border-slate-200/50">
+              <div className="flex items-center gap-4">
+                <EmployeeAvatar employee={emp} size="lg" />
                 <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-gray-900 truncate">
+                  <div className="font-bold text-slate-900 text-base truncate">
                     {emp.full_name}
                   </div>
-                  <div className="text-xs text-gray-500 truncate">
-                    {emp.position?.name || "No position"}
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="text-sm text-slate-600 truncate">
+                      {emp.position?.name || "No position"}
+                    </div>
+                    {emp.position?.color && (
+                      <div
+                        className="w-3 h-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: emp.position.color }}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
             </div>
-            <div className="p-4">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {weekDays.map((day) => {
                   const dayKey = `${emp.id}_${format(day, "yyyy-MM-dd")}`;
                   const dayShifts = shiftsByEmpDay.get(dayKey) || [];
@@ -331,14 +359,17 @@ export function ScheduleGrid({
                   const timeOffLabel = timeOffLabelFor(emp.id, day);
 
                   return (
-                    <div key={day.getTime()} className="space-y-2">
+                    <div key={day.getTime()} className="space-y-3">
                       <div className="text-center">
-                        <div className="font-medium text-sm text-gray-900">
-                          {format(day, "EEE")}
+                        <div className="font-bold text-sm text-slate-900">
+                          {format(day, "EEE").toUpperCase()}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-slate-600 bg-white/60 rounded-lg px-2 py-1 mt-1 inline-block">
                           {format(day, "MMM d")}
                         </div>
+                        {format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd") && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full mx-auto mt-1"></div>
+                        )}
                       </div>
                       <DroppableCell
                         id={id}

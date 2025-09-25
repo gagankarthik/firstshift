@@ -65,7 +65,7 @@ import type {
   Avail, 
   TimeOff 
 } from "@/components/schedule/types";
-import { 
+import {
   OPEN_EMP_ID,
   overlaps,
   preserveTime,
@@ -73,6 +73,7 @@ import {
   pickOne,
   yyyyMmDd,
   toIso,
+  toIsoWithOvernightHandling,
   fmtShort,
 } from "@/components/schedule/utils";
 
@@ -480,18 +481,18 @@ export default function SchedulePage() {
   // Shift creation function
   async function createShift() {
     if (!perms.canManageSchedule) return;
-    
+
     const empId = dlg.state.employeeId === "none" ? null : dlg.state.employeeId;
     const posId = dlg.state.positionId === "none" ? null : dlg.state.positionId;
     const locId = dlg.state.locationId === "none" ? null : dlg.state.locationId;
     const startIso = toIso(dlg.state.date, dlg.state.start);
-    const endIso = toIso(dlg.state.date, dlg.state.end);
+    const endIso = toIsoWithOvernightHandling(dlg.state.date, dlg.state.end, true, dlg.state.start);
     const dStart = new Date(startIso),
       dEnd = new Date(endIso);
-    
-    // Validation
-    if (dEnd <= dStart) {
-      toast.error("End must be after start");
+
+    // Validation - allow overnight shifts, only reject if times are identical
+    if (dStart.getTime() === dEnd.getTime()) {
+      toast.error("Start and end time cannot be the same");
       return;
     }
 
@@ -563,18 +564,18 @@ export default function SchedulePage() {
   // Shift update function
   async function updateShift() {
     if (!dlg.state.shiftId) return;
-    
+
     const empId = dlg.state.employeeId === "none" ? null : dlg.state.employeeId;
     const posId = dlg.state.positionId === "none" ? null : dlg.state.positionId;
     const locId = dlg.state.locationId === "none" ? null : dlg.state.locationId;
     const startIso = toIso(dlg.state.date, dlg.state.start);
-    const endIso = toIso(dlg.state.date, dlg.state.end);
+    const endIso = toIsoWithOvernightHandling(dlg.state.date, dlg.state.end, true, dlg.state.start);
     const dStart = new Date(startIso),
       dEnd = new Date(endIso);
-    
-    // Validation
-    if (dEnd <= dStart) {
-      toast.error("End must be after start");
+
+    // Validation - allow overnight shifts, only reject if times are identical
+    if (dStart.getTime() === dEnd.getTime()) {
+      toast.error("Start and end time cannot be the same");
       return;
     }
 
@@ -686,48 +687,79 @@ export default function SchedulePage() {
     return shiftsByEmpDay.get(key) || [];
   }
 
-  // CSV export function
+  // Enhanced CSV export function with better formatting
   function exportCSV() {
     const days = eachDayISO(exportStart, exportEnd);
     const rows: string[] = [];
-    
-    // Header row
-    const headerRow = ["Employee", ...days.map(d => format(new Date(d), "EEE MMM d"))];
+
+    // Enhanced header with metadata
+    rows.push(`"Schedule Export - ${format(new Date(exportStart), "MMMM d, yyyy")} to ${format(new Date(exportEnd), "MMMM d, yyyy")}"`);
+    rows.push(`"Generated on ${format(new Date(), "MMMM d, yyyy 'at' h:mm a")}"`);
+    rows.push(`"Total Employees: ${employees.length}, Total Days: ${days.length}"`);
+    rows.push(""); // Empty row
+
+    // Header row with enhanced formatting
+    const headerRow = ["Employee", "Position", ...days.map(d => {
+      const date = new Date(d);
+      return `"${format(date, "EEEE")}\n${format(date, "MMM d, yyyy")}"`;
+    })];
     rows.push(headerRow.join(","));
 
-    // Open shifts row
-    const openRow = ["Open Shifts"];
+    // Open shifts row with enhanced info
+    const openRow = ["Open Shifts", "Unassigned"];
     days.forEach(day => {
       const dayShifts = getShiftsForEmployeeAndDay(OPEN_EMP_ID, day);
       const shiftText = dayShifts.map(s => {
-        const st = format(new Date(s.starts_at), "h:mma");
-        const en = format(new Date(s.ends_at), "h:mma");
-        return `${st}-${en}`;
-      }).join("; ") || "—";
+        const st = format(new Date(s.starts_at), "h:mm a");
+        const en = format(new Date(s.ends_at), "h:mm a");
+        const duration = Math.round((new Date(s.ends_at).getTime() - new Date(s.starts_at).getTime()) / (1000 * 60 * 60 * 100)) / 10;
+        const pos = s.position?.name ? ` (${s.position.name})` : "";
+        return `${st} - ${en}${pos} [${duration}h]`;
+      }).join("; ") || "No shifts";
       openRow.push(`"${shiftText}"`);
     });
     rows.push(openRow.join(","));
 
-    // Employee rows
+    // Employee rows with enhanced details
     employees.forEach(emp => {
-      const empRow = [emp.full_name];
+      const empRow = [`"${emp.full_name}"`, `"${emp.position?.name || "No position"}"`];
       days.forEach(day => {
         const dayShifts = getShiftsForEmployeeAndDay(emp.id, day);
-        const shiftText = dayShifts.map(s => {
-          const st = format(new Date(s.starts_at), "h:mma");
-          const en = format(new Date(s.ends_at), "h:mma");
-          const pos = s.position?.name ? ` (${s.position.name})` : "";
-          return `${st}-${en}${pos}`;
-        }).join("; ") || "—";
+        const timeOffLabel = timeOffLabelFor(emp.id, new Date(day));
+
+        let shiftText;
+        if (timeOffLabel) {
+          shiftText = "Time Off";
+        } else if (dayShifts.length > 0) {
+          shiftText = dayShifts.map(s => {
+            const st = format(new Date(s.starts_at), "h:mm a");
+            const en = format(new Date(s.ends_at), "h:mm a");
+            const duration = Math.round((new Date(s.ends_at).getTime() - new Date(s.starts_at).getTime()) / (1000 * 60 * 60 * 100)) / 10;
+            const pos = s.position?.name ? ` (${s.position.name})` : "";
+            return `${st} - ${en}${pos} [${duration}h]`;
+          }).join("; ");
+        } else {
+          shiftText = "Off";
+        }
         empRow.push(`"${shiftText}"`);
       });
       rows.push(empRow.join(","));
     });
 
-    // Download CSV
-    const name = `schedule_${format(new Date(exportStart), "yyyyMMdd")}-${format(
+    // Enhanced footer with summary
+    rows.push(""); // Empty row
+    const totalShiftsCount = days.reduce((total, day) => {
+      return total + [...employees, { id: OPEN_EMP_ID }].reduce((dayTotal, emp) => {
+        return dayTotal + getShiftsForEmployeeAndDay(emp.id, day).length;
+      }, 0);
+    }, 0);
+    rows.push(`"Summary: ${totalShiftsCount} total shifts scheduled"`);
+    rows.push(`"FirstShift Schedule Management System"`);
+
+    // Download CSV with enhanced naming
+    const name = `FirstShift_Schedule_${format(new Date(exportStart), "yyyy-MM-dd")}_to_${format(
       new Date(exportEnd),
-      "yyyyMMdd"
+      "yyyy-MM-dd"
     )}.csv`;
     const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -742,7 +774,7 @@ export default function SchedulePage() {
     }, 0);
   }
 
-  // Print function
+  // Enhanced Print function
   function openPrintPreview() {
     setExportOpen(false);
     setPrintMode(true);
@@ -754,6 +786,104 @@ export default function SchedulePage() {
         { once: true }
       );
     }, 150);
+  }
+
+  // Calendar export function (ICS format)
+  function exportToCalendar() {
+    const days = eachDayISO(exportStart, exportEnd);
+    const icsEvents: string[] = [];
+
+    // ICS header
+    icsEvents.push("BEGIN:VCALENDAR");
+    icsEvents.push("VERSION:2.0");
+    icsEvents.push("PRODID:-//FirstShift//Schedule Export//EN");
+    icsEvents.push("CALSCALE:GREGORIAN");
+    icsEvents.push("METHOD:PUBLISH");
+    icsEvents.push("X-WR-CALNAME:FirstShift Schedule");
+    icsEvents.push("X-WR-CALDESC:Work Schedule from FirstShift");
+
+    // Generate events for each shift
+    days.forEach(day => {
+      employees.forEach(emp => {
+        const dayShifts = getShiftsForEmployeeAndDay(emp.id, day);
+        dayShifts.forEach(shift => {
+          const startDate = new Date(shift.starts_at);
+          const endDate = new Date(shift.ends_at);
+
+          // Format dates for ICS (YYYYMMDDTHHMMSSZ)
+          const formatICSDate = (date: Date) => {
+            return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+          };
+
+          const uid = `shift-${shift.id}@firstshift.app`;
+          const summary = `${emp.full_name} - ${shift.position?.name || 'Work Shift'}`;
+          const description = `Employee: ${emp.full_name}\nPosition: ${shift.position?.name || 'No position'}\nDuration: ${Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 100)) / 10} hours`;
+
+          icsEvents.push("BEGIN:VEVENT");
+          icsEvents.push(`UID:${uid}`);
+          icsEvents.push(`DTSTART:${formatICSDate(startDate)}`);
+          icsEvents.push(`DTEND:${formatICSDate(endDate)}`);
+          icsEvents.push(`SUMMARY:${summary}`);
+          icsEvents.push(`DESCRIPTION:${description}`);
+          icsEvents.push(`CATEGORIES:Work,Schedule`);
+          icsEvents.push(`STATUS:CONFIRMED`);
+          icsEvents.push(`TRANSP:OPAQUE`);
+          icsEvents.push(`CREATED:${formatICSDate(new Date())}`);
+          icsEvents.push(`LAST-MODIFIED:${formatICSDate(new Date())}`);
+          icsEvents.push("END:VEVENT");
+        });
+      });
+
+      // Add open shifts as well
+      const openShifts = getShiftsForEmployeeAndDay(OPEN_EMP_ID, day);
+      openShifts.forEach(shift => {
+        const startDate = new Date(shift.starts_at);
+        const endDate = new Date(shift.ends_at);
+
+        const formatICSDate = (date: Date) => {
+          return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        };
+
+        const uid = `open-shift-${shift.id}@firstshift.app`;
+        const summary = `Open Shift - ${shift.position?.name || 'Available Position'}`;
+        const description = `Open shift available for assignment\nPosition: ${shift.position?.name || 'No position specified'}\nDuration: ${Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 100)) / 10} hours`;
+
+        icsEvents.push("BEGIN:VEVENT");
+        icsEvents.push(`UID:${uid}`);
+        icsEvents.push(`DTSTART:${formatICSDate(startDate)}`);
+        icsEvents.push(`DTEND:${formatICSDate(endDate)}`);
+        icsEvents.push(`SUMMARY:${summary}`);
+        icsEvents.push(`DESCRIPTION:${description}`);
+        icsEvents.push(`CATEGORIES:Work,Schedule,Open`);
+        icsEvents.push(`STATUS:TENTATIVE`);
+        icsEvents.push(`TRANSP:TRANSPARENT`);
+        icsEvents.push(`CREATED:${formatICSDate(new Date())}`);
+        icsEvents.push(`LAST-MODIFIED:${formatICSDate(new Date())}`);
+        icsEvents.push("END:VEVENT");
+      });
+    });
+
+    // ICS footer
+    icsEvents.push("END:VCALENDAR");
+
+    // Download ICS file
+    const icsContent = icsEvents.join("\r\n");
+    const fileName = `FirstShift_Calendar_${format(new Date(exportStart), "yyyy-MM-dd")}_to_${format(new Date(exportEnd), "yyyy-MM-dd")}.ics`;
+    const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+      a.remove();
+    }, 0);
+
+    toast.success("Calendar events exported!", {
+      description: `Downloaded ${fileName} - Import into your calendar app.`
+    });
   }
 
   // Loading state
@@ -769,116 +899,163 @@ export default function SchedulePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-7xl">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-slate-800 via-blue-700 to-indigo-700 bg-clip-text text-transparent">Schedule</h1>
-            <p className="text-sm sm:text-base text-slate-600 mt-1">
-              {format(weekDays[0], "MMM d")} - {format(weekDays[6], "MMM d, yyyy")}
-            </p>
-          </div>
-          
-          {/* Week Navigation */}
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setWeekStart(addDays(weekStart, -7))}
-              className="border-slate-300 hover:bg-slate-50 text-slate-700"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div className="text-sm font-medium px-3 py-2 bg-white rounded-lg border border-slate-200 shadow-sm">
-              {format(weekDays[0], "MMM d")} - {format(weekDays[6], "MMM d")}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
+      <div className="mx-auto px-3 sm:px-4 lg:px-6 py-4 lg:py-6 max-w-7xl">
+        {/* Modern Page Header */}
+        <div className="mb-6 lg:mb-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center shadow-md">
+                  <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-slate-800 via-blue-700 to-indigo-700 bg-clip-text text-transparent">
+                    Schedule Management
+                  </h1>
+                  <p className="text-sm text-slate-600 mt-0.5">
+                    {format(weekDays[0], "MMMM d")} - {format(weekDays[6], "MMMM d, yyyy")}
+                  </p>
+                </div>
+              </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setWeekStart(addDays(weekStart, +7))}
-              className="border-slate-300 hover:bg-slate-50 text-slate-700"
-            >
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+
+            {/* Enhanced Week Navigation */}
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setWeekStart(addDays(weekStart, -7))}
+                className="h-9 px-3 border-slate-300 hover:bg-slate-50 text-slate-700 shadow-sm transition-all duration-200 hover:shadow-md"
+              >
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">Previous</span>
+              </Button>
+
+              <div className="flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-xl border border-slate-200 shadow-sm">
+                <div className="text-sm font-semibold text-slate-800">
+                  {format(weekDays[0], "MMM d")} - {format(weekDays[6], "MMM d")}
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setWeekStart(addDays(weekStart, +7))}
+                className="h-9 px-3 border-slate-300 hover:bg-slate-50 text-slate-700 shadow-sm transition-all duration-200 hover:shadow-md"
+              >
+                <span className="hidden sm:inline">Next</span>
+                <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Action Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          {/* Search and Filters */}
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1 sm:flex-none">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-              <Input
-                placeholder="Search employees..."
-                className="pl-10 w-full sm:w-64 border-slate-300 focus:border-blue-500 focus:ring-blue-500/20"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-              />
-            </div>
-            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex border-slate-300 hover:bg-slate-50 text-slate-700 h-8 px-3 text-sm">
-              <Filter className="h-3 w-3" />
-              Filter
-            </Button>
-            <Button variant="outline" size="sm" className="sm:hidden border-slate-300 hover:bg-slate-50 text-slate-700 h-8 w-8 p-0">
-              <Filter className="h-3 w-3" />
-            </Button>
-          </div>
+        {/* Enhanced Action Bar */}
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-slate-200/60 shadow-sm mb-6">
+          <div className="p-4 lg:p-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              {/* Search and Filter Section */}
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="relative">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                  <Input
+                    placeholder="Search employees..."
+                    className="pl-10 pr-4 h-10 w-full sm:w-80 bg-white/80 border-slate-300 rounded-xl focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200 shadow-sm"
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                  />
+                </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setViewOpen(true)}
-              className="gap-1.5 hidden sm:flex border-slate-300 hover:bg-slate-50 text-slate-700 h-8 px-3 text-sm"
-            >
-              <Eye className="h-3 w-3" />
-              View
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setViewOpen(true)}
-              className="sm:hidden border-slate-300 hover:bg-slate-50 text-slate-700 h-8 w-8 p-0"
-            >
-              <Eye className="h-3 w-3" />
-            </Button>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-1.5 border-slate-300 hover:bg-slate-50 text-slate-700 h-8 px-3 text-sm">
-                  <Download className="h-3 w-3" />
-                  <span className="hidden sm:inline">Export</span>
-                  <ChevronDown className="h-2.5 w-2.5" />
+                <Button
+                  variant="outline"
+                  className="gap-2 h-10 px-4 bg-white/80 border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
+                >
+                  <Filter className="h-4 w-4" />
+                  <span>Filters</span>
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setExportOpen(true)}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Export as CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={openPrintPreview}>
-                  <Printer className="h-4 w-4 mr-2" />
-                  Print Schedule
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </div>
 
-            {canManage && (
-              <Button
-                size="sm"
-                onClick={() => {
-                  dlg.reset({});
-                  dlg.setOpen(true);
-                }}
-                className="gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-200 h-8 px-3 text-sm"
-              >
-                <Plus className="h-3 w-3" />
-                <span className="hidden sm:inline">Add Shift</span>
-              </Button>
-            )}
+              {/* Action Buttons Section */}
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setViewOpen(true)}
+                  className="gap-2 h-10 px-4 bg-white/80 border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
+                >
+                  <Eye className="h-4 w-4" />
+                  <span className="hidden sm:inline">Schedule View</span>
+                </Button>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="gap-2 h-10 px-4 bg-white/80 border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
+                    >
+                      <Download className="h-4 w-4" />
+                      <span className="hidden sm:inline">Export</span>
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="rounded-xl shadow-lg border-slate-200">
+                    <DropdownMenuItem onClick={() => setExportOpen(true)} className="gap-3 p-3 rounded-lg">
+                      <FileText className="h-4 w-4" />
+                      Export & Print Options
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setExportOpen(false);
+                        exportToCalendar();
+                      }}
+                      className="gap-3 p-3 rounded-lg"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      Download Calendar Events
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {canManage && (
+                  <Button
+                    onClick={() => {
+                      dlg.reset({});
+                      dlg.setOpen(true);
+                    }}
+                    className="gap-2 h-10 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>New Shift</span>
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Stats Bar */}
+            <div className="mt-4 pt-4 border-t border-slate-200/60">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-3">
+                  <div className="text-lg font-bold text-blue-700">{employees.length}</div>
+                  <div className="text-xs text-slate-600 mt-1">Employees</div>
+                </div>
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-3">
+                  <div className="text-lg font-bold text-green-700">{shifts.length}</div>
+                  <div className="text-xs text-slate-600 mt-1">Total Shifts</div>
+                </div>
+                <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-3">
+                  <div className="text-lg font-bold text-orange-700">{shifts.filter(s => !s.employee_id).length}</div>
+                  <div className="text-xs text-slate-600 mt-1">Open Shifts</div>
+                </div>
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-3">
+                  <div className="text-lg font-bold text-purple-700">{shifts.filter(s => s.status === 'completed').length}</div>
+                  <div className="text-xs text-slate-600 mt-1">Completed</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -958,7 +1135,7 @@ export default function SchedulePage() {
           onDelete={dlg.state.mode === "edit" ? deleteShift : undefined}
         />
 
-        {/* Export Dialog */}
+        {/* Enhanced Export Dialog */}
         <ExportDialog
           open={exportOpen}
           onOpenChange={setExportOpen}
@@ -969,89 +1146,157 @@ export default function SchedulePage() {
           onStartChange={setExportStart}
           onEndChange={setExportEnd}
           onExport={exportCSV}
+          onPrint={openPrintPreview}
+          onCalendarExport={exportToCalendar}
           getShiftsForEmployeeAndDay={getShiftsForEmployeeAndDay}
           timeOffLabelFor={timeOffLabelFor}
         />
 
-        {/* Print View (Hidden) */}
+        {/* Enhanced Print View (Hidden) */}
         <div className={`print-only ${printMode ? "block" : "hidden"} bg-white`}>
-          <div className="p-4">
-            <div className="mb-4 text-center border-b border-slate-300 pb-4">
-              <h1 className="text-xl font-bold text-slate-800">Employee Schedule Report</h1>
-              <p className="text-slate-600 text-sm mt-1">
-                {format(new Date(exportStart), "MMMM d")} – {format(new Date(exportEnd), "MMMM d, yyyy")}
-              </p>
-              <p className="text-xs text-slate-500 mt-2">
-                Generated on {format(new Date(), "MMMM d, yyyy 'at' h:mm a")}
-              </p>
+          <div className="p-6">
+            {/* Professional Print Header */}
+            <div className="mb-8 text-center border-b-2 border-slate-300 pb-6">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center">
+                  <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-slate-800">Employee Schedule Report</h1>
+                  <p className="text-slate-600 text-lg mt-1">
+                    {format(new Date(exportStart), "MMMM d")} – {format(new Date(exportEnd), "MMMM d, yyyy")}
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-between items-center text-sm text-slate-500">
+                <div>Generated on {format(new Date(), "MMMM d, yyyy 'at' h:mm a")}</div>
+                <div>{employees.length} employees • {eachDayISO(exportStart, exportEnd).reduce((total, day) => {
+                  return total + [...employees, { id: OPEN_EMP_ID }].reduce((dayTotal, emp) => {
+                    return dayTotal + getShiftsForEmployeeAndDay(emp.id, day).length;
+                  }, 0);
+                }, 0)} shifts in date range</div>
+              </div>
             </div>
 
-            <table className="w-full text-xs border-collapse border border-slate-400">
-              <thead className="bg-slate-100">
-                <tr>
-                  <th className="border border-slate-400 p-2 font-bold text-left w-[140px] text-slate-800">Employee</th>
-                  {eachDayISO(exportStart, exportEnd).map((dayISO) => (
-                    <th key={dayISO} className="border border-slate-400 p-1.5 text-center font-bold text-slate-800">
-                      <div>
-                        <div className="font-semibold">{format(new Date(dayISO), "EEE")}</div>
-                        <div className="text-xs font-normal text-slate-600">{format(new Date(dayISO), "MMM d")}</div>
-                      </div>
+            {/* Minimal Print Table */}
+            <div className="border border-slate-300">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border border-slate-300 p-2 font-bold text-left text-slate-800">
+                      Employee
                     </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="bg-orange-50">
-                  <td className="border p-2 font-semibold">Open Shifts</td>
-                  {eachDayISO(exportStart, exportEnd).map((dayISO) => {
-                    const dayShifts = getShiftsForEmployeeAndDay(OPEN_EMP_ID, dayISO);
-                    return (
-                      <td key={dayISO} className="border p-2 text-center text-xs">
-                        {dayShifts.length > 0 ? (
-                          dayShifts.map((s) => (
-                            <div key={s.id}>
-                              {format(new Date(s.starts_at), "h:mma")}-{format(new Date(s.ends_at), "h:mma")}
-                            </div>
-                          ))
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-                {employees.map((emp) => (
-                  <tr key={emp.id}>
-                    <td className="border p-2 font-medium">{emp.full_name}</td>
+                    {eachDayISO(exportStart, exportEnd).map((dayISO) => (
+                      <th key={dayISO} className="border border-slate-300 p-1 text-center font-bold text-slate-800">
+                        <div>
+                          <div className="text-xs">{format(new Date(dayISO), "EEE")}</div>
+                          <div className="text-xs">{format(new Date(dayISO), "M/d")}</div>
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* Minimal Open Shifts Row */}
+                  <tr>
+                    <td className="border border-slate-300 p-1 font-bold text-slate-800 text-xs">
+                      Open Shifts
+                    </td>
                     {eachDayISO(exportStart, exportEnd).map((dayISO) => {
-                      const dayShifts = getShiftsForEmployeeAndDay(emp.id, dayISO);
-                      const timeOffLabel = timeOffLabelFor(emp.id, new Date(dayISO));
+                      const dayShifts = getShiftsForEmployeeAndDay(OPEN_EMP_ID, dayISO);
                       return (
-                        <td key={dayISO} className="border p-2 text-center text-xs">
-                          {timeOffLabel ? (
-                            "Time off"
-                          ) : dayShifts.length > 0 ? (
-                            dayShifts.map((s) => (
-                              <div key={s.id}>
-                                {format(new Date(s.starts_at), "h:mma")}-{format(new Date(s.ends_at), "h:mma")}
-                              </div>
-                            ))
+                        <td key={dayISO} className="border border-slate-300 p-3 text-center">
+                          {dayShifts.length > 0 ? (
+                            <div className="space-y-1">
+                              {dayShifts.map((s) => (
+                                <div key={s.id} className="bg-white/60 rounded px-2 py-1 text-sm font-medium">
+                                  <div>{format(new Date(s.starts_at), "h:mm a")}</div>
+                                  <div className="text-xs text-slate-600">to {format(new Date(s.ends_at), "h:mm a")}</div>
+                                  {s.position?.name && (
+                                    <div className="text-xs text-orange-700 font-medium">{s.position.name}</div>
+                                  )}
+                                </div>
+                              ))}\n                            </div>
                           ) : (
-                            "—"
+                            <div className="text-slate-500 text-sm">No open shifts</div>
                           )}
                         </td>
                       );
                     })}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+
+                  {/* Enhanced Employee Rows */}
+                  {employees.map((emp, index) => (
+                    <tr key={emp.id} className={index % 2 === 0 ? "bg-white" : "bg-slate-50/40"}>
+                      <td className="border border-slate-300 p-4">
+                        <div className="space-y-1">
+                          <div className="font-bold text-slate-800">{emp.full_name}</div>
+                          <div className="text-sm text-slate-600 flex items-center gap-2">
+                            {emp.position?.name || "No position"}
+                            {emp.position?.color && (
+                              <div
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: emp.position.color }}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      {eachDayISO(exportStart, exportEnd).map((dayISO) => {
+                        const dayShifts = getShiftsForEmployeeAndDay(emp.id, dayISO);
+                        const timeOffLabel = timeOffLabelFor(emp.id, new Date(dayISO));
+                        return (
+                          <td key={dayISO} className="border border-slate-300 p-3 text-center">
+                            {timeOffLabel ? (
+                              <div className="bg-red-100 text-red-700 rounded px-2 py-1 text-sm font-medium">
+                                Time Off
+                              </div>
+                            ) : dayShifts.length > 0 ? (
+                              <div className="space-y-1">
+                                {dayShifts.map((s) => (
+                                  <div key={s.id} className="bg-blue-50 border border-blue-200 rounded px-2 py-1 text-sm">
+                                    <div className="font-medium text-slate-800">
+                                      {format(new Date(s.starts_at), "h:mm a")}
+                                    </div>
+                                    <div className="text-xs text-slate-600">
+                                      to {format(new Date(s.ends_at), "h:mm a")}
+                                    </div>
+                                    {s.position?.name && (
+                                      <div className="text-xs font-medium" style={{ color: s.position.color || "#64748b" }}>
+                                        {s.position.name}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-slate-400 text-sm">—</div>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Print Footer */}
+            <div className="mt-6 pt-4 border-t border-slate-200 text-center text-xs text-slate-500">
+              <div>FirstShift Schedule Management System • Confidential Document</div>
+            </div>
           </div>
         </div>
 
-        {/* Print Styles */}
+        {/* Enhanced Print Styles */}
         <style jsx global>{`
           @media print {
+            * {
+              -webkit-print-color-adjust: exact !important;
+              color-adjust: exact !important;
+            }
             body * {
               visibility: hidden;
             }
@@ -1063,16 +1308,41 @@ export default function SchedulePage() {
               left: 0;
               top: 0;
               width: 100%;
+              background: white !important;
             }
             @page {
-              margin: 0.5in;
+              margin: 0.3in;
               size: landscape;
             }
             table {
-              page-break-inside: auto;
+              page-break-inside: avoid !important;
+              border-collapse: collapse;
+              width: 100% !important;
+              table-layout: fixed !important;
+              font-size: 7px !important;
+            }
+            th, td {
+              border: 1px solid #999 !important;
+              padding: 2px !important;
+              word-wrap: break-word;
+              overflow: hidden;
+            }
+            th {
+              background: #f5f5f5 !important;
+              font-weight: bold !important;
+              font-size: 8px !important;
             }
             tr {
-              page-break-inside: avoid;
+              page-break-inside: avoid !important;
+              height: auto !important;
+            }
+            .print-only h1 {
+              font-size: 14px !important;
+              margin: 5px 0 !important;
+            }
+            .print-only p {
+              font-size: 10px !important;
+              margin: 2px 0 !important;
             }
           }
         `}</style>

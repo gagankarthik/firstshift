@@ -44,6 +44,19 @@ export const yyyyMmDd = (d: Date) => format(d, "yyyy-MM-dd");
 export const toIso = (date: string, time: string) =>
   new Date(`${date}T${time}:00`).toISOString();
 
+export const toIsoWithOvernightHandling = (date: string, time: string, isEndTime: boolean = false, startTime?: string) => {
+  let targetDate = date;
+
+  // If this is an end time and it's earlier than the start time, assume it's the next day
+  if (isEndTime && startTime && time < startTime) {
+    const dateObj = new Date(date);
+    dateObj.setDate(dateObj.getDate() + 1);
+    targetDate = format(dateObj, "yyyy-MM-dd");
+  }
+
+  return new Date(`${targetDate}T${time}:00`).toISOString();
+};
+
 export const addHoursStr = (hhmm: string, hours: number) => {
   const [h, m] = hhmm.split(":").map((n) => parseInt(n || "0", 10));
   const d = new Date(2000, 0, 1, h, m, 0);
@@ -88,14 +101,20 @@ export function formatTimeRange(start: string, end: string) {
 
 // Validation helpers
 export function isValidTimeRange(start: string, end: string) {
-  const startTime = new Date(`2000-01-01T${start}:00`);
-  const endTime = new Date(`2000-01-01T${end}:00`);
-  return endTime > startTime;
+  // Always return true for any non-empty time inputs
+  // This allows both regular shifts (9am-5pm) and overnight shifts (11pm-7am)
+  return !!(start && end && start.trim() && end.trim());
 }
 
 export function calculateShiftDuration(start: string, end: string, breakMinutes: number = 0) {
   const startTime = new Date(`2000-01-01T${start}:00`);
-  const endTime = new Date(`2000-01-01T${end}:00`);
+  let endTime = new Date(`2000-01-01T${end}:00`);
+
+  // Handle overnight shifts (e.g., 23:00 to 07:00)
+  if (endTime <= startTime) {
+    endTime = new Date(`2000-01-02T${end}:00`);
+  }
+
   const totalMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
   return Math.max(0, totalMinutes - breakMinutes);
 }

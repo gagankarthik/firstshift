@@ -3,252 +3,142 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion, useScroll, useTransform, useInView, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
   CalendarCheck,
   Users2,
   Clock3,
-  LayoutDashboard,
-  ShieldCheck,
-  Zap,
-  ChevronDown,
   Menu,
   X,
   Check,
   Star,
   Sparkles,
-  Radio,
-  KeyRound,
-  Play,
-  Smartphone,
   Globe,
   BarChart3,
-  MessageSquare,
-  Award,
-  Target,
   TrendingUp,
-  Eye,
-  Lightbulb,
   Rocket,
   HeartHandshake,
-  MousePointer,
-  Palette,
-  Layers,
+  Zap,
 } from "lucide-react";
 
-// Fix hydration by using client-side only state
-const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useEffect : () => {};
 
-// Animation variants for consistent motion design
-const fadeInUp = {
-  initial: { opacity: 0, y: 60 },
-  animate: { opacity: 1, y: 0 },
-};
 
-const fadeInLeft = {
-  initial: { opacity: 0, x: -60 },
-  animate: { opacity: 1, x: 0 },
-};
 
-const fadeInRight = {
-  initial: { opacity: 0, x: 60 },
-  animate: { opacity: 1, x: 0 },
-};
-
-const staggerContainer = {
-  animate: {
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const scaleOnHover = {
-  whileHover: { scale: 1.05 },
-  whileTap: { scale: 0.95 },
-};
-
-const floatingAnimation = {
-  y: [0, -10, 0],
-};
-
-// Hero particles component
-const ParticleField = () => {
-  const [particles, setParticles] = useState<Array<{ id: number, x: number, y: number, delay: number }>>([]);
-
-  useEffect(() => {
-    const newParticles = Array.from({ length: 50 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      delay: Math.random() * 2,
-    }));
-    setParticles(newParticles);
-  }, []);
-
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {particles.map((particle) => (
-        <motion.div
-          key={particle.id}
-          className="absolute w-1 h-1 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full opacity-20"
-          style={{
-            left: `${particle.x}%`,
-            top: `${particle.y}%`,
-          }}
-          animate={{
-            y: [0, -30, 0],
-            opacity: [0.2, 0.5, 0.2],
-          }}
-          transition={{
-            duration: 4 + Math.random() * 2,
-            repeat: Number.POSITIVE_INFINITY,
-            delay: particle.delay,
-            ease: "easeInOut",
-          }}
-        />
-      ))}
-    </div>
-  );
-};
-
-// Mouse follower component
-const MouseFollower = () => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-      setIsVisible(true);
-    };
-
-    const handleMouseLeave = () => {
-      setIsVisible(false);
-    };
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseleave', handleMouseLeave);
-
-      return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseleave', handleMouseLeave);
-      };
-    }
-  }, []);
-
-  if (typeof window === 'undefined') return null;
-
-  return (
-    <motion.div
-      className="fixed top-0 left-0 pointer-events-none z-50 mix-blend-difference"
-      animate={{
-        x: mousePosition.x - 10,
-        y: mousePosition.y - 10,
-        opacity: isVisible ? 1 : 0,
-      }}
-      transition={{ type: "spring", stiffness: 500, damping: 28 }}
-    >
-      <div className="w-5 h-5 bg-white rounded-full" />
-    </motion.div>
-  );
-};
 
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { scrollY } = useScroll();
   const [mounted, setMounted] = useState(false);
 
-  // Fix hydration by ensuring client-side only rendering
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Parallax transforms
-  const y1 = useTransform(scrollY, [0, 1000], [0, -100]);
-  const y2 = useTransform(scrollY, [0, 1000], [0, -200]);
-  const opacity = useTransform(scrollY, [0, 300], [1, 0.8]);
-
-  // Enhanced feature set with detailed benefits and modern metrics
+  // Core workforce management features
   const mainFeatures = [
     {
       icon: <CalendarCheck className="w-6 h-6" />,
-      title: "AI-Powered Scheduling",
-      description: "Smart algorithms automatically optimize schedules based on availability, skills, and business rules.",
-      highlights: ["Conflict-free scheduling", "Automatic optimization", "Smart suggestions"],
-      gradient: "from-violet-500 via-purple-500 to-fuchsia-500",
-      metric: "90% faster",
-      category: "Automation"
+      title: "Smart Scheduling",
+      description: "Create optimal schedules in minutes with automatic conflict detection and staff availability.",
+      highlights: ["Drag-and-drop scheduling", "Conflict detection", "Availability matching"],
+      gradient: "from-blue-500 to-blue-600",
+      roi: "Save 5+ hours weekly"
     },
     {
       icon: <Users2 className="w-6 h-6" />,
-      title: "Team Collaboration Hub",
-      description: "Real-time communication and collaboration tools that keep your team connected and informed.",
-      highlights: ["Instant messaging", "Team announcements", "Shift swapping"],
-      gradient: "from-blue-500 via-cyan-500 to-teal-500",
-      metric: "85% engagement",
-      category: "Communication"
+      title: "Employee Management",
+      description: "Manage your entire workforce from hiring to scheduling with comprehensive employee profiles.",
+      highlights: ["Employee profiles", "Role management", "Performance tracking"],
+      gradient: "from-green-500 to-green-600",
+      roi: "Reduce turnover 25%"
     },
     {
       icon: <Clock3 className="w-6 h-6" />,
-      title: "Smart Time Tracking",
-      description: "Advanced time tracking with GPS verification, break management, and overtime alerts.",
-      highlights: ["GPS clock-in", "Break tracking", "Overtime alerts"],
-      gradient: "from-emerald-500 via-green-500 to-lime-500",
-      metric: "99.9% accuracy",
-      category: "Tracking"
+      title: "Time & Attendance",
+      description: "Track work hours accurately with mobile clock-in, break management, and overtime alerts.",
+      highlights: ["Mobile clock-in/out", "Break tracking", "Overtime management"],
+      gradient: "from-purple-500 to-purple-600",
+      roi: "Cut payroll errors 90%"
     },
     {
-      icon: <ShieldCheck className="w-6 h-6" />,
-      title: "Enterprise Security",
-      description: "Bank-level security with role-based access, audit trails, and compliance monitoring.",
-      highlights: ["SOC 2 compliant", "Multi-factor auth", "Audit trails"],
-      gradient: "from-amber-500 via-orange-500 to-red-500",
-      metric: "100% secure",
-      category: "Security"
-    },
-    {
-      icon: <Zap className="w-6 h-6" />,
-      title: "Lightning Performance",
-      description: "Built for speed with real-time updates, offline capabilities, and instant sync.",
-      highlights: ["Sub-second loading", "Offline mode", "Real-time sync"],
-      gradient: "from-pink-500 via-rose-500 to-red-500",
-      metric: "<100ms load",
-      category: "Performance"
-    },
-    {
-      icon: <LayoutDashboard className="w-6 h-6" />,
-      title: "Analytics & Insights",
-      description: "Comprehensive analytics with predictive insights, cost optimization, and performance metrics.",
-      highlights: ["Predictive analytics", "Cost insights", "Performance KPIs"],
-      gradient: "from-indigo-500 via-blue-500 to-cyan-500",
-      metric: "360° visibility",
-      category: "Analytics"
-    },
+      icon: <BarChart3 className="w-6 h-6" />,
+      title: "Labor Cost Analytics",
+      description: "Monitor labor costs in real-time with detailed reports and budget forecasting.",
+      highlights: ["Real-time costs", "Budget tracking", "Detailed reports"],
+      gradient: "from-orange-500 to-orange-600",
+      roi: "Reduce labor costs 15%"
+    }
   ];
 
-  // Enhanced benefits with modern focus
+  // Key business benefits
   const benefits = [
     {
       icon: <Rocket className="w-8 h-8" />,
-      title: "Launch in Minutes",
-      description: "Get your entire team scheduled and operational in under 5 minutes with our intelligent setup wizard.",
-      gradient: "from-violet-500 to-purple-500",
-    },
-    {
-      icon: <HeartHandshake className="w-8 h-8" />,
-      title: "Team Happiness",
-      description: "Increase employee satisfaction by 40% with fair scheduling, easy shift swaps, and transparent communication.",
-      gradient: "from-pink-500 to-rose-500",
+      title: "Quick Setup",
+      description: "Get started in 5 minutes. Import your team, set availability, and start scheduling immediately.",
+      gradient: "from-blue-500 to-blue-600",
     },
     {
       icon: <TrendingUp className="w-8 h-8" />,
-      title: "ROI Guaranteed",
-      description: "See immediate cost savings through optimized labor allocation and reduced scheduling overhead.",
-      gradient: "from-emerald-500 to-green-500",
+      title: "Proven ROI",
+      description: "Save 15-20% on labor costs while reducing scheduling time by 80%. Typical payback in 2 months.",
+      gradient: "from-green-500 to-green-600",
     },
+    {
+      icon: <HeartHandshake className="w-8 h-8" />,
+      title: "Happy Employees",
+      description: "Reduce no-shows by 60% with transparent scheduling, easy shift swaps, and mobile notifications.",
+      gradient: "from-purple-500 to-purple-600",
+    },
+  ];
+
+  // Pricing plans
+  const pricingPlans = [
+    {
+      name: "Starter",
+      price: "Free",
+      description: "Perfect for small teams getting started",
+      features: [
+        "Up to 5 employees",
+        "Basic scheduling",
+        "Time tracking",
+        "Mobile app",
+        "Email support"
+      ],
+      cta: "Start Free",
+      popular: false
+    },
+    {
+      name: "Professional",
+      price: "$8",
+      period: "/employee/month",
+      description: "Everything you need to manage your workforce",
+      features: [
+        "Unlimited employees",
+        "Advanced scheduling",
+        "Labor cost analytics",
+        "Integrations",
+        "Priority support",
+        "Custom reports"
+      ],
+      cta: "Start Free Trial",
+      popular: true
+    },
+    {
+      name: "Enterprise",
+      price: "Custom",
+      description: "For large organizations with complex needs",
+      features: [
+        "All Professional features",
+        "Multi-location support",
+        "API access",
+        "Custom integrations",
+        "Dedicated support",
+        "SLA guarantee"
+      ],
+      cta: "Contact Sales",
+      popular: false
+    }
   ];
 
   // Modern industry solutions
@@ -319,26 +209,6 @@ export default function LandingPage() {
     },
   ];
 
-  // Enhanced interactivity states
-  const [activeFeature, setActiveFeature] = useState(0);
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
-  const [hoveredIndustry, setHoveredIndustry] = useState<number | null>(null);
-
-  // Auto-rotate testimonials
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [testimonials.length]);
-
-  // Auto-rotate features
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveFeature((prev) => (prev + 1) % mainFeatures.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [mainFeatures.length]);
 
   if (!mounted) {
     // Return minimal loading state to prevent hydration issues
@@ -351,31 +221,8 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black text-white overflow-x-hidden relative">
-      <MouseFollower />
-
-      {/* Advanced background effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {/* Animated gradient mesh */}
-        <div className="absolute inset-0">
-          <motion.div
-            animate={{
-              background: [
-                "radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%)",
-                "radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%)",
-                "radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%)",
-              ],
-            }}
-            transition={{ duration: 10, repeat: Number.POSITIVE_INFINITY, repeatType: "reverse" }}
-            className="absolute inset-0"
-          />
-        </div>
-
-        {/* Particle field */}
-        <ParticleField />
-
-        {/* Grid pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-      </div>
+      {/* Simple background pattern */}
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none" />
 
       {/* Enhanced Navigation */}
       <motion.header
@@ -524,33 +371,28 @@ export default function LandingPage() {
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="inline-flex items-center space-x-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full px-6 py-3 mb-8"
+              transition={{ duration: 0.6 }}
+              className="inline-flex items-center space-x-2 bg-green-500/20 border border-green-500/30 rounded-full px-6 py-2 mb-8"
             >
-              <Sparkles className="w-4 h-4 text-yellow-400" />
-              <span className="text-sm font-medium text-gray-200">
-                Introducing AI-Powered Scheduling
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+              <span className="text-sm font-medium text-green-300">
+                Trusted by 50,000+ businesses worldwide
               </span>
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-                className="w-2 h-2 bg-green-400 rounded-full"
-              />
             </motion.div>
 
             {/* Main Headline */}
             <motion.h1
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-5xl sm:text-6xl lg:text-8xl font-black leading-tight mb-6"
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="text-4xl sm:text-5xl lg:text-6xl font-black leading-tight mb-6"
             >
-              <span className="bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
-                Schedule
+              <span className="text-white">
+                Employee Scheduling
               </span>
               <br />
-              <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400 bg-clip-text text-transparent">
-                Smarter
+              <span className="bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">
+                Made Simple
               </span>
             </motion.h1>
 
@@ -558,49 +400,53 @@ export default function LandingPage() {
             <motion.p
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-xl sm:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed mb-12"
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed mb-8"
             >
-              The world's most intelligent workforce management platform.
-              <span className="text-white font-semibold"> Powered by AI</span>,
-              loved by teams, trusted by enterprises.
+              Create schedules in minutes, not hours. Reduce labor costs by 15-20% while keeping employees happy.
+              <span className="text-white font-semibold"> Free for up to 5 employees.</span>
             </motion.p>
+
+            {/* Value Props */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="flex flex-wrap justify-center items-center gap-6 mb-12 text-sm text-gray-300"
+            >
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-400" />
+                <span>Setup in 5 minutes</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-400" />
+                <span>No contracts</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-400" />
+                <span>Cancel anytime</span>
+              </div>
+            </motion.div>
 
             {/* CTA Buttons */}
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 mb-16"
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-16"
             >
               <Link href="/auth/signup">
-                <motion.button
-                  whileHover={{
-                    scale: 1.05,
-                    boxShadow: "0 25px 50px rgba(168, 85, 247, 0.5)"
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                  className="group px-8 py-4 bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 text-white rounded-2xl font-bold text-lg shadow-2xl shadow-purple-500/25 hover:shadow-purple-500/50 transition-all duration-300"
-                >
-                  Start Free Trial
-                  <motion.div
-                    animate={{ x: [0, 4, 0] }}
-                    transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY }}
-                    className="inline-block ml-2"
-                  >
-                    <ArrowRight className="w-5 h-5" />
-                  </motion.div>
-                </motion.button>
+                <button className="px-8 py-4 bg-gradient-to-r from-blue-500 to-green-500 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                  Start Free - No Credit Card
+                  <ArrowRight className="w-5 h-5 ml-2 inline" />
+                </button>
               </Link>
 
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="group px-8 py-4 bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-2xl font-semibold text-lg hover:bg-white/20 transition-all duration-300"
-              >
-                <Play className="w-5 h-5 mr-2 inline" />
-                Watch Demo
-              </motion.button>
+              <Link href="/auth/login">
+                <button className="px-8 py-4 bg-white/10 border border-white/20 text-white rounded-xl font-semibold text-lg hover:bg-white/20 transition-all duration-300">
+                  Sign In
+                </button>
+              </Link>
             </motion.div>
 
             {/* Trust Indicators */}
@@ -627,210 +473,95 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Floating elements */}
-        <motion.div
-          style={{ y: y1 }}
-          className="absolute top-20 right-20 hidden lg:block"
-        >
-          <motion.div
-            animate={{ y: [0, -10, 0] }}
-            transition={{
-              duration: 3,
-              repeat: Number.POSITIVE_INFINITY,
-              ease: "easeInOut"
-            }}
-            className="w-20 h-20 bg-gradient-to-r from-violet-500 to-purple-500 rounded-3xl shadow-2xl shadow-purple-500/25 flex items-center justify-center"
-          >
-            <Zap className="w-8 h-8 text-white" />
-          </motion.div>
-        </motion.div>
-
-        <motion.div
-          style={{ y: y2 }}
-          className="absolute bottom-32 left-20 hidden lg:block"
-        >
-          <motion.div
-            animate={{ y: [0, -10, 0] }}
-            transition={{
-              duration: 3,
-              repeat: Number.POSITIVE_INFINITY,
-              ease: "easeInOut",
-              delay: 1
-            }}
-            className="w-16 h-16 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-2xl shadow-2xl shadow-cyan-500/25 flex items-center justify-center"
-          >
-            <Users2 className="w-6 h-6 text-white" />
-          </motion.div>
-        </motion.div>
-
-        {/* Scroll indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 1.5 }}
-          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
-        >
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-            className="flex flex-col items-center text-gray-400"
-          >
-            <span className="text-xs mb-2">Scroll to explore</span>
-            <ChevronDown className="w-4 h-4" />
-          </motion.div>
-        </motion.div>
       </section>
 
       {/* Features Section - Modern Grid */}
       <section id="features" className="py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
-          <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={staggerContainer}
-            className="text-center mb-20"
-          >
-            <motion.div
-              variants={fadeInUp}
-              className="inline-flex items-center space-x-2 bg-violet-500/10 backdrop-blur-xl border border-violet-500/20 rounded-full px-6 py-3 mb-6"
-            >
-              <Palette className="w-4 h-4 text-violet-400" />
-              <span className="text-sm font-medium text-violet-300">
-                Powerful Features
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center space-x-2 bg-blue-500/10 border border-blue-500/20 rounded-full px-6 py-3 mb-6">
+              <Sparkles className="w-4 h-4 text-blue-400" />
+              <span className="text-sm font-medium text-blue-300">
+                Everything You Need
               </span>
-            </motion.div>
+            </div>
 
-            <motion.h2
-              variants={fadeInUp}
-              className="text-4xl sm:text-5xl lg:text-6xl font-black mb-6"
-            >
-              <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                Built for the
+            <h2 className="text-4xl sm:text-5xl font-black mb-6">
+              <span className="text-white">
+                Powerful Features for
               </span>
               <br />
-              <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
-                Future of Work
+              <span className="bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">
+                Modern Businesses
               </span>
-            </motion.h2>
+            </h2>
 
-            <motion.p
-              variants={fadeInUp}
-              className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed"
-            >
-              Experience the next generation of workforce management with AI-powered automation,
-              real-time collaboration, and enterprise-grade security.
-            </motion.p>
-          </motion.div>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+              Everything you need to manage your workforce efficiently.
+              No complex setup, no hidden costs, just results.
+            </p>
+          </div>
 
           {/* Features Grid */}
-          <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, amount: 0.1 }}
-            variants={staggerContainer}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-          >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {mainFeatures.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                variants={fadeInUp}
-                whileHover={{ y: -10, scale: 1.02 }}
-                onMouseEnter={() => setActiveFeature(index)}
-                className="group relative"
-              >
-                <div className="relative h-full p-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl hover:border-white/20 transition-all duration-500">
-                  {/* Gradient overlay */}
-                  <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
-
-                  {/* Category badge */}
-                  <div className="absolute top-6 right-6">
-                    <span className="px-3 py-1 text-xs font-semibold bg-white/10 backdrop-blur-xl rounded-full text-gray-300 border border-white/10">
-                      {feature.category}
-                    </span>
-                  </div>
-
+              <div key={feature.title} className="group">
+                <div className="relative h-full p-6 bg-white/5 border border-white/10 rounded-2xl hover:border-white/20 transition-all duration-300">
                   {/* Icon */}
-                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-4`}>
                     <span className="text-white">{feature.icon}</span>
                   </div>
 
                   {/* Content */}
-                  <h3 className="text-xl font-bold text-white mb-4 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-gray-300 group-hover:bg-clip-text transition-all duration-300">
+                  <h3 className="text-xl font-bold text-white mb-3">
                     {feature.title}
                   </h3>
 
-                  <p className="text-gray-300 leading-relaxed mb-6">
+                  <p className="text-gray-300 leading-relaxed mb-4 text-sm">
                     {feature.description}
                   </p>
 
                   {/* Highlights */}
-                  <ul className="space-y-2 mb-6">
+                  <ul className="space-y-1 mb-4">
                     {feature.highlights.map((highlight, i) => (
                       <li key={i} className="flex items-center text-sm text-gray-400">
-                        <div className="w-1.5 h-1.5 rounded-full bg-violet-400 mr-3 flex-shrink-0" />
+                        <Check className="w-3 h-3 text-green-400 mr-2 flex-shrink-0" />
                         {highlight}
                       </li>
                     ))}
                   </ul>
 
-                  {/* Metric */}
-                  <div className={`inline-flex items-center px-4 py-2 bg-gradient-to-r ${feature.gradient} rounded-full text-white font-bold text-sm`}>
-                    {feature.metric}
+                  {/* ROI */}
+                  <div className="text-green-400 font-semibold text-sm">
+                    {feature.roi}
                   </div>
                 </div>
-
-                {/* Active indicator */}
-                {activeFeature === index && (
-                  <motion.div
-                    layoutId="activeFeature"
-                    className="absolute inset-0 rounded-3xl border-2 border-violet-400/50 pointer-events-none"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* Benefits Section */}
       <section className="py-32 bg-gradient-to-b from-transparent via-white/5 to-transparent">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={staggerContainer}
-            className="text-center mb-20"
-          >
-            <motion.h2
-              variants={fadeInUp}
-              className="text-4xl sm:text-5xl font-black mb-6"
-            >
-              <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                Why Teams Choose
+          <div className="text-center mb-20">
+            <h2 className="text-4xl sm:text-5xl font-black mb-6">
+              <span className="text-white">
+                Why Choose
               </span>
               <br />
-              <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">
                 FirstShift
               </span>
-            </motion.h2>
-          </motion.div>
+            </h2>
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             {benefits.map((benefit, index) => (
-              <motion.div
-                key={benefit.title}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.2 }}
-                viewport={{ once: true }}
-                whileHover={{ y: -5 }}
-                className="text-center group"
-              >
-                <div className={`w-20 h-20 mx-auto mb-8 rounded-3xl bg-gradient-to-br ${benefit.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+              <div key={benefit.title} className="text-center group">
+                <div className={`w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br ${benefit.gradient} flex items-center justify-center`}>
                   <span className="text-white">{benefit.icon}</span>
                 </div>
                 <h3 className="text-2xl font-bold text-white mb-4">
@@ -839,225 +570,240 @@ export default function LandingPage() {
                 <p className="text-gray-300 leading-relaxed max-w-sm mx-auto">
                   {benefit.description}
                 </p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Industry Solutions */}
-      <section id="solutions" className="py-32">
+      {/* Pricing Section */}
+      <section id="pricing" className="py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={staggerContainer}
-            className="text-center mb-20"
-          >
-            <motion.div
-              variants={fadeInUp}
-              className="inline-flex items-center space-x-2 bg-cyan-500/10 backdrop-blur-xl border border-cyan-500/20 rounded-full px-6 py-3 mb-6"
-            >
-              <Globe className="w-4 h-4 text-cyan-400" />
-              <span className="text-sm font-medium text-cyan-300">
-                Industry Solutions
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center space-x-2 bg-green-500/10 border border-green-500/20 rounded-full px-6 py-3 mb-6">
+              <Star className="w-4 h-4 text-green-400" />
+              <span className="text-sm font-medium text-green-300">
+                Simple Pricing
               </span>
-            </motion.div>
+            </div>
 
-            <motion.h2
-              variants={fadeInUp}
-              className="text-4xl sm:text-5xl font-black mb-6"
-            >
-              <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                Trusted Across
+            <h2 className="text-4xl sm:text-5xl font-black mb-6">
+              <span className="text-white">
+                Choose Your
               </span>
               <br />
-              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                Every Industry
+              <span className="bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">
+                Perfect Plan
               </span>
-            </motion.h2>
-          </motion.div>
+            </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {industries.map((industry, index) => (
-              <motion.div
-                key={industry.name}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                whileHover={{ scale: 1.05, y: -5 }}
-                onMouseEnter={() => setHoveredIndustry(index)}
-                onMouseLeave={() => setHoveredIndustry(null)}
-                className="relative group"
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed mb-8">
+              Start free, scale as you grow. No setup fees, no contracts, cancel anytime.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {pricingPlans.map((plan, index) => (
+              <div
+                key={plan.name}
+                className={`relative p-8 rounded-2xl border transition-all duration-300 ${
+                  plan.popular
+                    ? 'bg-white/10 border-green-500/50 scale-105'
+                    : 'bg-white/5 border-white/10 hover:border-white/20'
+                }`}
               >
-                <div className="p-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl text-center hover:border-white/20 transition-all duration-300">
-                  <div className="text-5xl mb-4">{industry.icon}</div>
-                  <h3 className="text-xl font-bold text-white mb-2">
-                    {industry.name}
-                  </h3>
-                  <p className="text-gray-300 text-sm mb-4">
-                    {industry.description}
-                  </p>
-                  <div className="space-y-2">
-                    <p className="text-violet-400 font-semibold">
-                      {industry.users}
-                    </p>
-                    <div className="inline-flex items-center px-3 py-1 bg-green-500/20 rounded-full">
-                      <TrendingUp className="w-3 h-3 text-green-400 mr-1" />
-                      <span className="text-green-400 text-xs font-bold">
-                        {industry.growth}
-                      </span>
-                    </div>
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <span className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-4 py-2 rounded-full text-sm font-bold">
+                      Most Popular
+                    </span>
                   </div>
+                )}
+
+                <div className="text-center mb-8">
+                  <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
+                  <div className="mb-4">
+                    <span className="text-4xl font-black text-white">{plan.price}</span>
+                    {plan.period && <span className="text-gray-300">{plan.period}</span>}
+                  </div>
+                  <p className="text-gray-300">{plan.description}</p>
                 </div>
 
-                {hoveredIndustry === index && (
-                  <motion.div
-                    layoutId="industryHover"
-                    className="absolute inset-0 rounded-3xl border-2 border-cyan-400/50 pointer-events-none"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-              </motion.div>
+                <ul className="space-y-4 mb-8">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-center text-gray-300">
+                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+
+                <Link href="/auth/signup">
+                  <button
+                    className={`w-full py-3 rounded-xl font-bold transition-all duration-300 ${
+                      plan.popular
+                        ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white hover:scale-105 shadow-lg'
+                        : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                    }`}
+                  >
+                    {plan.cta}
+                  </button>
+                </Link>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-16">
+            <p className="text-gray-300 mb-4">
+              All plans include 14-day free trial • No credit card required
+            </p>
+            <Link href="#" className="text-blue-400 hover:text-blue-300 font-medium">
+              View detailed feature comparison →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Social Proof Section */}
+      <section id="solutions" className="py-32 bg-gradient-to-b from-white/5 to-transparent">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl sm:text-5xl font-black mb-6">
+              <span className="text-white">
+                Trusted by Businesses
+              </span>
+              <br />
+              <span className="bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">
+                Everywhere
+              </span>
+            </h2>
+            <p className="text-xl text-gray-300">
+              Join thousands of companies already saving time and money with FirstShift
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
+            {industries.map((industry, index) => (
+              <div key={industry.name} className="text-center">
+                <div className="text-4xl mb-4">{industry.icon}</div>
+                <h3 className="text-lg font-bold text-white mb-2">
+                  {industry.name}
+                </h3>
+                <p className="text-gray-300 text-sm mb-2">
+                  {industry.description}
+                </p>
+                <p className="text-blue-400 font-semibold text-sm">
+                  {industry.users}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            {stats.map((stat, index) => (
+              <div key={stat.label} className="group">
+                <div className="flex justify-center mb-2">
+                  <stat.icon className="w-8 h-8 text-blue-400" />
+                </div>
+                <div className="text-3xl font-black text-white mb-1">{stat.number}</div>
+                <div className="text-gray-300 text-sm">{stat.label}</div>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-32 bg-gradient-to-b from-white/5 via-transparent to-white/5">
+      <section className="py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={staggerContainer}
-            className="text-center mb-20"
-          >
-            <motion.h2
-              variants={fadeInUp}
-              className="text-4xl sm:text-5xl font-black mb-6"
-            >
-              <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                Loved by
+          <div className="text-center mb-20">
+            <h2 className="text-4xl sm:text-5xl font-black mb-6">
+              <span className="text-white">
+                What Our Customers
               </span>
               <br />
               <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-                Thousands
+                Are Saying
               </span>
-            </motion.h2>
-          </motion.div>
+            </h2>
+          </div>
 
-          <div className="relative">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTestimonial}
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -40 }}
-                transition={{ duration: 0.5 }}
-                className="max-w-4xl mx-auto"
-              >
-                <div className="p-12 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl text-center">
-                  <div className="flex justify-center mb-6">
-                    {[...Array(testimonials[activeTestimonial].rating)].map((_, i) => (
-                      <Star key={i} className="w-6 h-6 text-yellow-400 fill-current" />
-                    ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <div key={index} className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                <div className="flex justify-center mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                  ))}
+                </div>
+
+                <blockquote className="text-gray-300 leading-relaxed mb-6 text-sm">
+                  "{testimonial.content}"
+                </blockquote>
+
+                <div className="flex items-center">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-green-500 flex items-center justify-center text-white font-bold text-sm mr-3">
+                    {testimonial.author.charAt(0)}
                   </div>
-
-                  <blockquote className="text-2xl sm:text-3xl font-medium text-white leading-relaxed mb-8">
-                    "{testimonials[activeTestimonial].content}"
-                  </blockquote>
-
-                  <div className="flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 flex items-center justify-center text-white font-bold text-xl mr-4">
-                      {testimonials[activeTestimonial].author.charAt(0)}
+                  <div>
+                    <div className="font-semibold text-white text-sm">
+                      {testimonial.author}
                     </div>
-                    <div className="text-left">
-                      <div className="font-bold text-white text-lg">
-                        {testimonials[activeTestimonial].author}
-                      </div>
-                      <div className="text-gray-300 text-sm">
-                        {testimonials[activeTestimonial].role}
-                      </div>
-                      <div className="text-violet-400 text-sm font-semibold">
-                        {testimonials[activeTestimonial].company}
-                      </div>
+                    <div className="text-gray-400 text-xs">
+                      {testimonial.role}, {testimonial.company}
                     </div>
                   </div>
                 </div>
-              </motion.div>
-            </AnimatePresence>
-
-            {/* Testimonial indicators */}
-            <div className="flex justify-center mt-8 space-x-3">
-              {testimonials.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setActiveTestimonial(index)}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    index === activeTestimonial
-                      ? 'bg-violet-400 scale-125'
-                      : 'bg-gray-600 hover:bg-gray-500'
-                  }`}
-                />
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-32">
+      <section className="py-32 bg-gradient-to-b from-white/5 to-transparent">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black mb-6">
-              <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                Ready to Transform
-              </span>
-              <br />
-              <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
-                Your Workforce?
-              </span>
-            </h2>
+          <h2 className="text-4xl sm:text-5xl font-black mb-6">
+            <span className="text-white">
+              Ready to Get Started?
+            </span>
+          </h2>
 
-            <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed">
-              Join thousands of companies already using FirstShift to optimize their operations
-              and empower their teams.
-            </p>
+          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+            Join 50,000+ businesses saving time and money with FirstShift.
+            <strong className="text-white"> Start your free trial today.</strong>
+          </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
-              <Link href="/auth/signup">
-                <motion.button
-                  whileHover={{
-                    scale: 1.05,
-                    boxShadow: "0 25px 50px rgba(168, 85, 247, 0.5)"
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                  className="px-10 py-4 bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 text-white rounded-2xl font-bold text-lg shadow-2xl shadow-purple-500/25 hover:shadow-purple-500/50 transition-all duration-300"
-                >
-                  Start Free Trial
-                  <ArrowRight className="w-5 h-5 ml-2 inline" />
-                </motion.button>
-              </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-8">
+            <Link href="/auth/signup">
+              <button className="px-10 py-4 bg-gradient-to-r from-blue-500 to-green-500 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                Start Free Trial
+                <ArrowRight className="w-5 h-5 ml-2 inline" />
+              </button>
+            </Link>
 
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-10 py-4 bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-2xl font-semibold text-lg hover:bg-white/20 transition-all duration-300"
-              >
-                <MessageSquare className="w-5 h-5 mr-2 inline" />
-                Talk to Sales
-              </motion.button>
+            <Link href="/auth/login">
+              <button className="px-10 py-4 bg-white/10 border border-white/20 text-white rounded-xl font-semibold text-lg hover:bg-white/20 transition-all duration-300">
+                Sign In
+              </button>
+            </Link>
+          </div>
+
+          <div className="flex flex-wrap justify-center items-center gap-6 text-sm text-gray-400">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-green-400" />
+              <span>14-day free trial</span>
             </div>
-          </motion.div>
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-green-400" />
+              <span>No credit card required</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-green-400" />
+              <span>Cancel anytime</span>
+            </div>
+          </div>
         </div>
       </section>
 

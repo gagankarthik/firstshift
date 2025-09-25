@@ -96,6 +96,9 @@ export function ShiftDialog({
   const totalMinutes = calculateShiftDuration(start, end);
   const workingMinutes = Math.max(0, totalMinutes - (parseInt(breakMin) || 0));
 
+  // Check if it's an overnight shift
+  const isOvernightShift = start && end && start > end;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -118,15 +121,16 @@ export function ShiftDialog({
         <div className="space-y-6">
           {/* Shift Summary Card */}
           {isValidTime && (
-            <Card className="p-4 bg-blue-50 border-blue-200">
+            <Card className={`p-4 ${isOvernightShift ? 'bg-purple-50 border-purple-200' : 'bg-blue-50 border-blue-200'}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Clock className="h-5 w-5 text-blue-600" />
+                  <Clock className={`h-5 w-5 ${isOvernightShift ? 'text-purple-600' : 'text-blue-600'}`} />
                   <div>
-                    <div className="font-medium text-blue-900">
+                    <div className={`font-medium ${isOvernightShift ? 'text-purple-900' : 'text-blue-900'}`}>
                       {formatTimeRange(start, end)}
+                      {isOvernightShift && <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">Overnight</span>}
                     </div>
-                    <div className="text-sm text-blue-700">
+                    <div className={`text-sm ${isOvernightShift ? 'text-purple-700' : 'text-blue-700'}`}>
                       {Math.floor(workingMinutes / 60)}h {workingMinutes % 60}m working time
                     </div>
                   </div>
@@ -247,7 +251,7 @@ export function ShiftDialog({
             {!isValidTime && (
               <div className="flex items-center gap-2 text-red-600 text-sm">
                 <AlertCircle className="h-4 w-4" />
-                End time must be after start time
+                Invalid time range
               </div>
             )}
           </div>
@@ -326,8 +330,62 @@ export function ShiftDialog({
 
           {/* Quick Actions */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Quick Actions</label>
-            <div className="flex gap-2 flex-wrap">
+            <label className="text-sm font-medium text-gray-700">Quick Shift Templates</label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onStartChange("07:00");
+                  onEndChange("15:00");
+                  onBreakChange("30");
+                }}
+                className="text-xs"
+              >
+                7-3 (8h)
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onStartChange("15:00");
+                  onEndChange("23:00");
+                  onBreakChange("30");
+                }}
+                className="text-xs"
+              >
+                3-11 (8h)
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onStartChange("23:00");
+                  onEndChange("07:00");
+                  onBreakChange("30");
+                }}
+                className="text-xs"
+              >
+                11-7 (8h)
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onStartChange("13:00");
+                  onEndChange("21:00");
+                  onBreakChange("30");
+                }}
+                className="text-xs"
+              >
+                1-9 (8h)
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -337,6 +395,7 @@ export function ShiftDialog({
                   onEndChange("17:00");
                   onBreakChange("60");
                 }}
+                className="text-xs"
               >
                 9-5 (1h break)
               </Button>
@@ -349,6 +408,7 @@ export function ShiftDialog({
                   onEndChange("16:00");
                   onBreakChange("30");
                 }}
+                className="text-xs"
               >
                 8-4 (30m break)
               </Button>
@@ -357,12 +417,13 @@ export function ShiftDialog({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  onStartChange("18:00");
-                  onEndChange("02:00");
+                  onStartChange("06:00");
+                  onEndChange("14:00");
                   onBreakChange("30");
                 }}
+                className="text-xs"
               >
-                Evening (6pm-2am)
+                6-2 (8h)
               </Button>
             </div>
           </div>

@@ -103,6 +103,84 @@ function SkeletonCard() {
   );
 }
 
+/* ============== Join Organization Component ============== */
+
+function JoinOrgForm() {
+  const sb = React.useMemo(() => createClient(), []);
+  const [joinCode, setJoinCode] = React.useState("");
+  const [joining, setJoining] = React.useState(false);
+
+  async function joinOrganization() {
+    if (!joinCode.trim()) {
+      toast.error("Please enter an invitation code");
+      return;
+    }
+
+    setJoining(true);
+    try {
+      const { error } = await sb.rpc("join_organization_by_code", {
+        p_code: joinCode.trim().toUpperCase(),
+      });
+
+      if (error) throw error;
+
+      toast.success("Successfully joined organization!", {
+        description: "Refreshing page to load your new organization...",
+      });
+
+      // Refresh the page to load the new organization
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (error: any) {
+      toast.error("Failed to join organization", {
+        description: error.message || "Invalid or expired invitation code"
+      });
+    } finally {
+      setJoining(false);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="join_code">Invitation Code</Label>
+        <div className="flex gap-2">
+          <Input
+            id="join_code"
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+            placeholder="Enter invitation code (e.g., ABC123)"
+            className="font-mono"
+            maxLength={10}
+            onKeyDown={(e) => e.key === "Enter" && joinOrganization()}
+          />
+          <Button
+            onClick={joinOrganization}
+            disabled={joining || !joinCode.trim()}
+            className="gap-2"
+          >
+            {joining ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <QrCode className="h-4 w-4" />
+            )}
+            {joining ? "Joining..." : "Join"}
+          </Button>
+        </div>
+      </div>
+
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          Ask an admin or manager from the organization to share an invitation code with you.
+          Once you join, you'll have access to that organization's schedules and data.
+        </AlertDescription>
+      </Alert>
+    </div>
+  );
+}
+
 /* ================== Page ================== */
 
 export default function SettingsPage() {
@@ -698,6 +776,19 @@ export default function SettingsPage() {
                     </Button>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <QrCode className="h-5 w-5 text-blue-600" />
+                  Join Organization
+                </CardTitle>
+                <CardDescription>Join another organization using an invitation code</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <JoinOrgForm />
               </CardContent>
             </Card>
 

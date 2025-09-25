@@ -387,271 +387,680 @@ export default function ReportPage() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Filters */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>Reports</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={applyDates} className="flex flex-wrap items-end gap-3">
-            <div>
-              <div className="mb-1 text-xs text-gray-500">From</div>
-              <Input type="date" className="bg-white" value={from} onChange={(e) => setFrom(e.target.value)} />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
+      <div className="mx-auto px-3 sm:px-4 lg:px-6 py-4 lg:py-6 max-w-7xl space-y-6">
+        {/* Enhanced Page Header */}
+        <div className="mb-6 lg:mb-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 flex items-center justify-center shadow-md">
+                  <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-slate-800 via-purple-700 to-indigo-700 bg-clip-text text-transparent">
+                    Analytics & Reports
+                  </h1>
+                  <p className="text-sm text-slate-600 mt-0.5">
+                    Comprehensive workforce insights and performance metrics
+                  </p>
+                </div>
+              </div>
             </div>
-            <div>
-              <div className="mb-1 text-xs text-gray-500">To</div>
-              <Input type="date" className="bg-white" value={to} onChange={(e) => setTo(e.target.value)} />
-            </div>
-            <Button type="submit" disabled={loading}>Apply</Button>
-            {(role === "admin" || role === "manager") && (
-              <Button type="button" variant="outline" onClick={exportCSV} disabled={loading}>
-                Export CSV
-              </Button>
-            )}
-            <div className="ml-auto text-xs text-gray-500">
-              Range: {format(new Date(from), "MMM d, yyyy")} – {format(new Date(to), "MMM d, yyyy")}
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* KPIs */}
-      <div className="grid gap-3 md:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-sm">Total Hours</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{kpis.totalHours}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-sm">Total Shifts</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{kpis.totalShifts}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-sm">Completed Shifts</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{kpis.completedShifts}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-sm">Approved Time Off (days)</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{kpis.approvedTimeOffDays}</CardContent>
-        </Card>
-      </div>
-
-      {/* Admin/Manager view */}
-      {(role === "admin" || role === "manager") && (
-        <>
-          <div className="grid gap-4 xl:grid-cols-3">
-            {/* Hours by employee (bar) */}
-            <Card className="xl:col-span-2">
-              <CardHeader className="pb-2">
-                <CardTitle>Hours by employee</CardTitle>
-              </CardHeader>
-              <CardContent className="h-[320px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={employeeTableRows}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" hide />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="hours" name="Hours" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Hours by position (pie) */}
-            <Card className="xl:col-span-1">
-              <CardHeader className="pb-2">
-                <CardTitle>Hours by position</CardTitle>
-              </CardHeader>
-              <CardContent className="h-[320px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Tooltip />
-                    <Legend />
-                    <Pie
-                      data={Array.from(totalsByPosition.entries()).map(([posId, rec]) => ({
-                        id: posId,
-                        name: rec.name,
-                        value: rec.hours,
-                      }))}
-                      dataKey="value"
-                      nameKey="name"
-                      outerRadius={100}
-                    >
-                      {Array.from(totalsByPosition.keys()).map((_, idx) => (
-                        <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
           </div>
+        </div>
 
-          {/* Trend */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Hours over time</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={dailyTotals}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" tickFormatter={(d) => format(parseISO(d), "MM/dd")} />
-                  <YAxis />
-                  <Tooltip labelFormatter={(d) => format(parseISO(d as string), "MMM d, yyyy")} />
-                  <Legend />
-                  <Line type="monotone" dataKey="hours" name="Hours" />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Employee table */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Employee summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-auto rounded-md border bg-white">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50">
-                    <tr className="border-b">
-                      <th className="p-2 text-left">Employee</th>
-                      <th className="p-2 text-left">Position</th>
-                      <th className="p-2 text-right">Hours</th>
-                      <th className="p-2 text-right">Shifts</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {employeeTableRows.map((r) => (
-                      <tr key={r.id} className="border-b">
-                        <td className="p-2">{r.name}</td>
-                        <td className="p-2">
-                          {r.position === "Unassigned" ? (
-                            <Badge variant="outline">Unassigned</Badge>
-                          ) : (
-                            r.position
-                          )}
-                        </td>
-                        <td className="p-2 text-right">{r.hours.toFixed(2)}</td>
-                        <td className="p-2 text-right">{r.shifts}</td>
-                      </tr>
-                    ))}
-                    {employeeTableRows.length === 0 && (
-                      <tr>
-                        <td colSpan={4} className="p-4 text-center text-gray-500">
-                          No data in this range.
-                        </td>
-                      </tr>
+        {/* Enhanced Filters Card */}
+        <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm rounded-2xl">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-800">
+              <svg className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
+              </svg>
+              Date Range & Filters
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={applyDates} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Start Date</label>
+                  <Input
+                    type="date"
+                    className="bg-white/80 border-slate-300 rounded-xl focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200"
+                    value={from}
+                    onChange={(e) => setFrom(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">End Date</label>
+                  <Input
+                    type="date"
+                    className="bg-white/80 border-slate-300 rounded-xl focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200"
+                    value={to}
+                    onChange={(e) => setTo(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-10 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
+                  >
+                    {loading ? (
+                      <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
                     )}
-                  </tbody>
-                </table>
+                    Apply Filters
+                  </Button>
+                </div>
+                {(role === "admin" || role === "manager") && (
+                  <div className="flex items-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={exportCSV}
+                      disabled={loading}
+                      className="w-full h-10 border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
+                    >
+                      <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Export CSV
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2 text-slate-700">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="font-medium">
+                      Reporting Period: {format(new Date(from), "MMM d, yyyy")} – {format(new Date(to), "MMM d, yyyy")}
+                    </span>
+                  </div>
+                  <div className="text-slate-600">
+                    {Math.ceil((new Date(to).getTime() - new Date(from).getTime()) / (1000 * 60 * 60 * 24))} days
+                  </div>
+                </div>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Enhanced KPI Dashboard */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white rounded-2xl overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-100 text-sm font-medium">Total Hours</p>
+                  <p className="text-3xl font-bold mt-2">{kpis.totalHours}</p>
+                  <p className="text-blue-200 text-xs mt-1">
+                    {kpis.totalShifts > 0 ? (kpis.totalHours / kpis.totalShifts).toFixed(1) : 0} avg per shift
+                  </p>
+                </div>
+                <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
               </div>
             </CardContent>
           </Card>
-        </>
-      )}
 
-      {/* Employee view (only my data) */}
-      {role === "employee" && (
-        <>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle>My hours over time</CardTitle>
+          <Card className="shadow-lg border-0 bg-gradient-to-br from-green-500 via-green-600 to-green-700 text-white rounded-2xl overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-green-100 text-sm font-medium">Total Shifts</p>
+                  <p className="text-3xl font-bold mt-2">{kpis.totalShifts}</p>
+                  <p className="text-green-200 text-xs mt-1">
+                    {employees.length > 0 ? (kpis.totalShifts / employees.length).toFixed(1) : 0} avg per employee
+                  </p>
+                </div>
+                <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg border-0 bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 text-white rounded-2xl overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-purple-100 text-sm font-medium">Completed Shifts</p>
+                  <p className="text-3xl font-bold mt-2">{kpis.completedShifts}</p>
+                  <p className="text-purple-200 text-xs mt-1">
+                    {kpis.totalShifts > 0 ? ((kpis.completedShifts / kpis.totalShifts) * 100).toFixed(1) : 0}% completion rate
+                  </p>
+                </div>
+                <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg border-0 bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 text-white rounded-2xl overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-orange-100 text-sm font-medium">Time Off Days</p>
+                  <p className="text-3xl font-bold mt-2">{kpis.approvedTimeOffDays}</p>
+                  <p className="text-orange-200 text-xs mt-1">
+                    {employees.length > 0 ? (kpis.approvedTimeOffDays / employees.length).toFixed(1) : 0} avg per employee
+                  </p>
+                </div>
+                <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Enhanced Admin/Manager Analytics */}
+        {(role === "admin" || role === "manager") && (
+          <>
+            <div className="grid gap-6 xl:grid-cols-3">
+              {/* Enhanced Hours by Employee Chart */}
+              <Card className="xl:col-span-2 shadow-lg border-0 bg-white/80 backdrop-blur-sm rounded-2xl">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-800">
+                    <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Employee Performance Overview
+                  </CardTitle>
+                  <p className="text-sm text-slate-600">Total hours worked by each team member</p>
+                </CardHeader>
+                <CardContent className="h-[380px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={employeeTableRows} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis
+                        dataKey="name"
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                        fontSize={12}
+                        stroke="#64748b"
+                      />
+                      <YAxis fontSize={12} stroke="#64748b" />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '12px',
+                          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
+                        }}
+                        labelStyle={{ color: '#1e293b', fontWeight: 'bold' }}
+                      />
+                      <Legend />
+                      <Bar
+                        dataKey="hours"
+                        name="Hours Worked"
+                        fill="url(#colorGradient1)"
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="shifts"
+                        name="Total Shifts"
+                        fill="url(#colorGradient2)"
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <defs>
+                        <linearGradient id="colorGradient1" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8} />
+                          <stop offset="100%" stopColor="#1e40af" stopOpacity={0.8} />
+                        </linearGradient>
+                        <linearGradient id="colorGradient2" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.8} />
+                          <stop offset="100%" stopColor="#7c3aed" stopOpacity={0.8} />
+                        </linearGradient>
+                      </defs>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Enhanced Position Distribution Chart */}
+              <Card className="xl:col-span-1 shadow-lg border-0 bg-white/80 backdrop-blur-sm rounded-2xl">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-800">
+                    <svg className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2V6" />
+                    </svg>
+                    Position Distribution
+                  </CardTitle>
+                  <p className="text-sm text-slate-600">Hours allocation by role</p>
+                </CardHeader>
+                <CardContent className="h-[380px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '12px',
+                          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
+                        }}
+                      />
+                      <Legend
+                        wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }}
+                      />
+                      <Pie
+                        data={Array.from(totalsByPosition.entries()).map(([posId, rec]) => ({
+                          id: posId,
+                          name: rec.name,
+                          value: rec.hours,
+                          percentage: totalsByPosition.size > 0 ?
+                            ((rec.hours / Array.from(totalsByPosition.values()).reduce((sum, p) => sum + p.hours, 0)) * 100).toFixed(1) : 0
+                        }))}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={120}
+                        innerRadius={60}
+                        paddingAngle={2}
+                      >
+                        {Array.from(totalsByPosition.keys()).map((_, idx) => (
+                          <Cell
+                            key={idx}
+                            fill={COLORS[idx % COLORS.length]}
+                            stroke="white"
+                            strokeWidth={2}
+                          />
+                        ))}
+                      </Pie>\n                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Enhanced Trend Analysis */}
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm rounded-2xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-800">
+                  <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  Workforce Trends & Patterns
+                </CardTitle>
+                <p className="text-sm text-slate-600">Daily hours progression and workload distribution</p>
               </CardHeader>
-              <CardContent className="h-[280px]">
+              <CardContent className="h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={dailyTotals}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="day" tickFormatter={(d) => format(parseISO(d), "MM/dd")} />
-                    <YAxis />
-                    <Tooltip labelFormatter={(d) => format(parseISO(d as string), "MMM d, yyyy")} />
+                  <LineChart data={dailyTotals} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis
+                      dataKey="day"
+                      tickFormatter={(d) => format(parseISO(d), "MM/dd")}
+                      fontSize={12}
+                      stroke="#64748b"
+                    />
+                    <YAxis fontSize={12} stroke="#64748b" />
+                    <Tooltip
+                      labelFormatter={(d) => format(parseISO(d as string), "EEEE, MMMM d, yyyy")}
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
+                      }}
+                      labelStyle={{ color: '#1e293b', fontWeight: 'bold' }}
+                    />
                     <Legend />
-                    <Line type="monotone" dataKey="hours" name="Hours" />
+                    <Line
+                      type="monotone"
+                      dataKey="hours"
+                      name="Daily Hours"
+                      stroke="url(#lineGradient)"
+                      strokeWidth={3}
+                      dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2, fill: '#ffffff' }}
+                    />
+                    <defs>
+                      <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#3b82f6" />
+                        <stop offset="100%" stopColor="#8b5cf6" />
+                      </linearGradient>
+                    </defs>
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle>My shift statuses</CardTitle>
+            {/* Enhanced Employee Performance Table */}
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm rounded-2xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-800">
+                  <svg className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  </svg>
+                  Detailed Employee Performance
+                </CardTitle>
+                <p className="text-sm text-slate-600">Comprehensive breakdown of individual contributions</p>
               </CardHeader>
-              <CardContent className="h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Tooltip />
-                    <Legend />
-                    <Pie
-                      data={statusBreakdown}
-                      dataKey="value"
-                      nameKey="name"
-                      outerRadius={100}
-                    >
-                      {statusBreakdown.map((_, idx) => (
-                        <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+              <CardContent>
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-slate-50 via-blue-50 to-indigo-50 border-b-2 border-slate-200">
+                        <th className="p-4 text-left font-bold text-slate-800">
+                          <div className="flex items-center gap-2">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            Employee
+                          </div>
+                        </th>
+                        <th className="p-4 text-left font-bold text-slate-800">
+                          <div className="flex items-center gap-2">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2V6" />
+                            </svg>
+                            Position
+                          </div>
+                        </th>
+                        <th className="p-4 text-right font-bold text-slate-800">
+                          <div className="flex items-center justify-end gap-2">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Total Hours
+                          </div>
+                        </th>
+                        <th className="p-4 text-right font-bold text-slate-800">
+                          <div className="flex items-center justify-end gap-2">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Total Shifts
+                          </div>
+                        </th>
+                        <th className="p-4 text-right font-bold text-slate-800">
+                          <div className="flex items-center justify-end gap-2">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            Avg Hours/Shift
+                          </div>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {employeeTableRows.map((r, index) => (
+                        <tr
+                          key={r.id}
+                          className={`border-b border-slate-100 transition-colors hover:bg-slate-50/50 ${
+                            index % 2 === 0 ? "bg-white" : "bg-slate-50/20"
+                          }`}
+                        >
+                          <td className="p-4">
+                            <div className="font-semibold text-slate-800">{r.name}</div>
+                          </td>
+                          <td className="p-4">
+                            {r.position === "Unassigned" ? (
+                              <Badge variant="outline" className="bg-slate-100 text-slate-600 border-slate-300">
+                                Unassigned
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200">
+                                {r.position}
+                              </Badge>
+                            )}
+                          </td>
+                          <td className="p-4 text-right">
+                            <div className="font-bold text-slate-800 text-lg">{r.hours.toFixed(1)}</div>
+                            <div className="text-xs text-slate-500">hours</div>
+                          </td>
+                          <td className="p-4 text-right">
+                            <div className="font-bold text-slate-800 text-lg">{r.shifts}</div>
+                            <div className="text-xs text-slate-500">shifts</div>
+                          </td>
+                          <td className="p-4 text-right">
+                            <div className="font-bold text-slate-800 text-lg">
+                              {r.shifts > 0 ? (r.hours / r.shifts).toFixed(1) : "0.0"}
+                            </div>
+                            <div className="text-xs text-slate-500">hrs/shift</div>
+                          </td>
+                        </tr>
                       ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
+                      {employeeTableRows.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="p-12 text-center">
+                            <div className="flex flex-col items-center gap-3">
+                              <svg className="h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              <div>
+                                <div className="text-lg font-medium text-slate-600">No performance data available</div>
+                                <div className="text-sm text-slate-500 mt-1">Try adjusting your date range or check if employees have scheduled shifts.</div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </CardContent>
             </Card>
-          </div>
-
-          {/* My time off list */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>My time off in range</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-auto rounded-md border bg-white">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50">
-                    <tr className="border-b">
-                      <th className="p-2 text-left">Type</th>
-                      <th className="p-2 text-left">Status</th>
-                      <th className="p-2 text-left">From</th>
-                      <th className="p-2 text-left">To</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {scopedTimeOff.map((t) => (
-                      <tr key={t.id} className="border-b">
-                        <td className="p-2 capitalize">{t.type}</td>
-                        <td className="p-2">
-                          <Badge variant={t.status === "approved" ? "default" : "outline"}>
-                            {t.status}
-                          </Badge>
-                        </td>
-                        <td className="p-2">{format(new Date(t.starts_at), "MMM d, yyyy")}</td>
-                        <td className="p-2">{format(new Date(t.ends_at), "MMM d, yyyy")}</td>
-                      </tr>
-                    ))}
-                    {scopedTimeOff.length === 0 && (
-                      <tr>
-                        <td colSpan={4} className="p-4 text-center text-gray-500">
-                          No time off in this range.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
         </>
       )}
+
+        {/* Enhanced Employee Personal Dashboard */}
+        {role === "employee" && (
+          <>
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm rounded-2xl">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-800">
+                    <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    My Work Hours Timeline
+                  </CardTitle>
+                  <p className="text-sm text-slate-600">Your daily hours worked over the selected period</p>
+                </CardHeader>
+                <CardContent className="h-[320px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={dailyTotals} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis
+                        dataKey="day"
+                        tickFormatter={(d) => format(parseISO(d), "MM/dd")}
+                        fontSize={12}
+                        stroke="#64748b"
+                      />
+                      <YAxis fontSize={12} stroke="#64748b" />
+                      <Tooltip
+                        labelFormatter={(d) => format(parseISO(d as string), "EEEE, MMMM d, yyyy")}
+                        contentStyle={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '12px',
+                          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
+                        }}
+                        labelStyle={{ color: '#1e293b', fontWeight: 'bold' }}
+                      />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="hours"
+                        name="Hours Worked"
+                        stroke="#3b82f6"
+                        strokeWidth={3}
+                        dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2, fill: '#ffffff' }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm rounded-2xl">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-800">
+                    <svg className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    My Shift Status Breakdown
+                  </CardTitle>
+                  <p className="text-sm text-slate-600">Distribution of your shift statuses</p>
+                </CardHeader>
+                <CardContent className="h-[320px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '12px',
+                          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
+                        }}
+                      />
+                      <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
+                      <Pie
+                        data={statusBreakdown}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={90}
+                        innerRadius={40}
+                        paddingAngle={2}
+                      >
+                        {statusBreakdown.map((_, idx) => (
+                          <Cell
+                            key={idx}
+                            fill={COLORS[idx % COLORS.length]}
+                            stroke="white"
+                            strokeWidth={2}
+                          />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Enhanced Time Off Summary */}
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm rounded-2xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-800">
+                  <svg className="h-5 w-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  My Time Off Summary
+                </CardTitle>
+                <p className="text-sm text-slate-600">Your approved and pending time off requests</p>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-slate-50 via-orange-50 to-amber-50 border-b-2 border-slate-200">
+                        <th className="p-4 text-left font-bold text-slate-800">Type</th>
+                        <th className="p-4 text-left font-bold text-slate-800">Status</th>
+                        <th className="p-4 text-left font-bold text-slate-800">Start Date</th>
+                        <th className="p-4 text-left font-bold text-slate-800">End Date</th>
+                        <th className="p-4 text-left font-bold text-slate-800">Duration</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {scopedTimeOff.map((t, index) => {
+                        const duration = Math.ceil((new Date(t.ends_at).getTime() - new Date(t.starts_at).getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                        return (
+                          <tr
+                            key={t.id}
+                            className={`border-b border-slate-100 transition-colors hover:bg-slate-50/50 ${
+                              index % 2 === 0 ? "bg-white" : "bg-slate-50/20"
+                            }`}
+                          >
+                            <td className="p-4">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-3 h-3 rounded-full ${
+                                  t.type === 'vacation' ? 'bg-blue-500' :
+                                  t.type === 'sick' ? 'bg-red-500' :
+                                  t.type === 'unpaid' ? 'bg-gray-500' : 'bg-purple-500'
+                                }`} />
+                                <span className="capitalize font-medium text-slate-800">{t.type}</span>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <Badge
+                                variant={t.status === "approved" ? "default" : "outline"}
+                                className={`capitalize ${
+                                  t.status === "approved"
+                                    ? "bg-green-100 text-green-700 border-green-200 hover:bg-green-200"
+                                    : t.status === "pending"
+                                    ? "bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-200"
+                                    : "bg-red-100 text-red-700 border-red-200 hover:bg-red-200"
+                                }`}
+                              >
+                                {t.status}
+                              </Badge>
+                            </td>
+                            <td className="p-4 font-medium text-slate-800">
+                              {format(new Date(t.starts_at), "MMM d, yyyy")}
+                            </td>
+                            <td className="p-4 font-medium text-slate-800">
+                              {format(new Date(t.ends_at), "MMM d, yyyy")}
+                            </td>
+                            <td className="p-4">
+                              <div className="font-bold text-slate-800">
+                                {duration} {duration === 1 ? 'day' : 'days'}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {scopedTimeOff.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="p-12 text-center">
+                            <div className="flex flex-col items-center gap-3">
+                              <svg className="h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <div>
+                                <div className="text-lg font-medium text-slate-600">No time off requests found</div>
+                                <div className="text-sm text-slate-500 mt-1">You haven't requested any time off in this date range.</div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
     </div>
   );
 }
