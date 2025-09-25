@@ -490,8 +490,13 @@ export default function ReportPage() {
                       Reporting Period: {format(new Date(from), "MMM d, yyyy")} – {format(new Date(to), "MMM d, yyyy")}
                     </span>
                   </div>
-                  <div className="text-slate-600">
-                    {Math.ceil((new Date(to).getTime() - new Date(from).getTime()) / (1000 * 60 * 60 * 24))} days
+                  <div className="flex items-center gap-4">
+                    <div className="text-slate-600">
+                      {Math.ceil((new Date(to).getTime() - new Date(from).getTime()) / (1000 * 60 * 60 * 24))} days
+                    </div>
+                    <div className="text-xs px-2 py-1 bg-white rounded-md text-slate-600 font-medium">
+                      {loading ? "Loading..." : `${scopedEmployeeIds.size} employee${scopedEmployeeIds.size !== 1 ? 's' : ''}`}
+                    </div>
                   </div>
                 </div>
               </div>

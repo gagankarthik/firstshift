@@ -342,9 +342,9 @@ function generateScheduleEmailHTML(
         <div class="footer">
           <p>This schedule was generated automatically by FirstShift.</p>
           <div class="footer-links">
-            <a href="#" class="footer-link">View Full Schedule</a>
-            <a href="#" class="footer-link">Request Time Off</a>
-            <a href="#" class="footer-link">Update Availability</a>
+            <a href="/schedule" class="footer-link">View Full Schedule</a>
+            <a href="/time-off" class="footer-link">Request Time Off</a>
+            <a href="/availability" class="footer-link">Update Availability</a>
           </div>
           <p style="margin-top: 16px; font-size: 12px;">
             Questions? Contact your manager or reply to this email.
@@ -461,7 +461,6 @@ export async function sendScheduleNotifications(
   results.forEach((result, index) => {
     if (result.status === 'fulfilled') {
       sent++;
-      console.log(`Email sent successfully to ${Array.from(shiftsByEmployee.keys())[index]}`);
     } else {
       errors.push(result.reason.message || 'Unknown error');
       console.error(`Failed to send email:`, result.reason);

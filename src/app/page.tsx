@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, useScroll, useTransform, useInView, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
+import { NoSSR } from "@/components/ui/no-ssr";
 import {
   ArrowRight,
   CalendarCheck,
@@ -39,6 +40,7 @@ import {
 
 // Fix hydration by using client-side only state
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useEffect : () => {};
+
 
 // Animation variants for consistent motion design
 const fadeInUp = {
@@ -159,12 +161,6 @@ const MouseFollower = () => {
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { scrollY } = useScroll();
-  const [mounted, setMounted] = useState(false);
-
-  // Fix hydration by ensuring client-side only rendering
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Parallax transforms
   const y1 = useTransform(scrollY, [0, 1000], [0, -100]);
@@ -340,18 +336,11 @@ export default function LandingPage() {
     return () => clearInterval(timer);
   }, [mainFeatures.length]);
 
-  if (!mounted) {
-    // Return minimal loading state to prevent hydration issues
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black text-white overflow-x-hidden relative">
-      <MouseFollower />
+      <NoSSR>
+        <MouseFollower />
+      </NoSSR>
 
       {/* Advanced background effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -371,7 +360,9 @@ export default function LandingPage() {
         </div>
 
         {/* Particle field */}
-        <ParticleField />
+        <NoSSR>
+          <ParticleField />
+        </NoSSR>
 
         {/* Grid pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:4rem_4rem]" />
@@ -1082,25 +1073,40 @@ export default function LandingPage() {
             {[
               {
                 title: "Product",
-                links: ["Features", "Pricing", "Security", "Integrations"],
+                links: [
+                  { text: "Features", href: "/docs" },
+                  { text: "Pricing", href: "/pricing" },
+                  { text: "Security", href: "/security" },
+                  { text: "Integrations", href: "/integrations" }
+                ],
               },
               {
                 title: "Company",
-                links: ["About", "Blog", "Careers", "Contact"],
+                links: [
+                  { text: "About", href: "/about" },
+                  { text: "Blog", href: "/blog" },
+                  { text: "Careers", href: "/careers" },
+                  { text: "Contact", href: "/contact" }
+                ],
               },
               {
                 title: "Resources",
-                links: ["Documentation", "Help Center", "Community", "API"],
+                links: [
+                  { text: "Documentation", href: "/docs" },
+                  { text: "Help Center", href: "/help" },
+                  { text: "Community", href: "/community" },
+                  { text: "API", href: "/docs/api" }
+                ],
               },
             ].map((section) => (
               <div key={section.title}>
                 <h3 className="font-bold text-white mb-4">{section.title}</h3>
                 <ul className="space-y-3">
                   {section.links.map((link) => (
-                    <li key={link}>
-                      <a href="#" className="text-gray-400 hover:text-white transition-colors duration-200">
-                        {link}
-                      </a>
+                    <li key={link.text}>
+                      <Link href={link.href} className="text-gray-400 hover:text-white transition-colors duration-200">
+                        {link.text}
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -1113,12 +1119,12 @@ export default function LandingPage() {
               © 2025 FirstShift. All rights reserved.
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
-              <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors duration-200">
+              <Link href="/privacy" className="text-gray-400 hover:text-white text-sm transition-colors duration-200">
                 Privacy Policy
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors duration-200">
+              </Link>
+              <Link href="/terms" className="text-gray-400 hover:text-white text-sm transition-colors duration-200">
                 Terms of Service
-              </a>
+              </Link>
             </div>
           </div>
         </div>

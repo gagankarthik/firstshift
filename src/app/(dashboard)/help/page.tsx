@@ -75,34 +75,64 @@ export default function HelpPage() {
 
   const mailSubject = encodeURIComponent("FirstShift Support");
   const mailBody = encodeURIComponent(`${diag}\n\nDescribe the issue here:\n- What happened?\n- Steps to reproduce:\n- Expected result:\n- Actual result:\n- Browser/OS:`);
-  const supportMail = `mailto:support@example.com?subject=${mailSubject}&body=${mailBody}`;
+  const supportMail = `mailto:support@firstshift.app?subject=${mailSubject}&body=${mailBody}`;
 
   const faqs = [
     {
+      k: "getting-started",
+      q: "How do I get started with FirstShift?",
+      a: "Start by joining your organization with a join code from your manager, then set your availability and view your schedule. Check the Documentation section for detailed guides."
+    },
+    {
       k: "roles",
-      q: "How do roles work?",
-      a: "Permissions are enforced per organization. Admins have full control; Managers can create schedules and approve time off; Employees can set their own availability and request time off."
+      q: "What are the different roles and their permissions?",
+      a: "Admin: Full control over organization, settings, and users. Manager: Create schedules, manage employees, approve time off. Employee: View schedule, set availability, request time off."
     },
     {
       k: "join-code",
-      q: "Join code says “invalid or expired”",
-      a: "Ask your admin/manager to generate a fresh code in Settings → Join Codes. Codes can expire or hit usage limits."
+      q: "My join code says 'invalid or expired'",
+      a: "Contact your admin or manager to generate a fresh code in Settings → Join Codes. Codes can expire or hit usage limits for security."
+    },
+    {
+      k: "schedule-viewing",
+      q: "How do I view my schedule?",
+      a: "Go to the Schedule page from the sidebar. You can view your shifts by day, week, or month. Click on any shift to see details like break times and location."
     },
     {
       k: "drag-drop",
-      q: "Drag and drop isn’t working on the schedule",
-      a: "Make sure you have the right permission (Admin/Manager) and that you’re not overlapping an existing shift. If the employee is marked unavailable, Managers can override when prompted."
+      q: "Drag and drop isn't working on the schedule",
+      a: "Ensure you have the right permissions (Admin/Manager) and aren't overlapping existing shifts. If an employee is unavailable, you'll be prompted to override."
     },
     {
       k: "time-off",
-      q: "Who can approve time off?",
-      a: "Admins and Managers can approve or deny requests. Employees can only submit and view their own status."
+      q: "How do I request time off?",
+      a: "Go to Time Off page, click 'Request Time Off', select dates and type (vacation, sick, etc.). Admins and Managers will review and approve/deny your request."
     },
     {
       k: "availability",
-      q: "Can employees set their own availability?",
-      a: "Yes. Employees can add time ranges per day. Managers can also edit anyone’s availability when needed."
+      q: "How do I set my availability?",
+      a: "Visit the Availability page to add your available time ranges for each day. This helps managers schedule you during times that work best."
     },
+    {
+      k: "notifications",
+      q: "How do I get notified about schedule changes?",
+      a: "You'll receive email notifications when your schedule is published or changes are made. Make sure your email is updated in Account settings."
+    },
+    {
+      k: "mobile",
+      q: "Can I use FirstShift on my phone?",
+      a: "Yes! FirstShift works great on mobile browsers. Simply visit the same URL on your phone and log in with your credentials."
+    },
+    {
+      k: "reports",
+      q: "How can I view my work hours and reports?",
+      a: "The Reports page shows your worked hours, completed shifts, and time off history. Managers and Admins can see organization-wide analytics."
+    },
+    {
+      k: "troubleshooting",
+      q: "What should I do if something isn't working?",
+      a: "Try refreshing your browser, signing out and back in, or checking your internet connection. If issues persist, contact support using the diagnostics tool below."
+    }
   ];
 
   const filteredFaqs = faqs.filter(
@@ -113,36 +143,43 @@ export default function HelpPage() {
 
   return (
     <div className="space-y-6">
-      {/* Gradient header */}
-      <div className="rounded-2xl border bg-gradient-to-br from-teal-50 via-white to-cyan-50 px-4 py-5 sm:px-6">
-        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <HelpCircle className="h-5 w-5 text-teal-600" />
-              <h1 className="text-xl font-semibold">Help &amp; Support</h1>
+      {/* Enhanced gradient header */}
+      <div className="rounded-2xl border bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-6 py-8 sm:px-8 shadow-lg">
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl shadow-md">
+                <HelpCircle className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-slate-800">Help &amp; Support Center</h1>
+                <p className="text-sm text-slate-600">
+                  Everything you need to master FirstShift
+                </p>
+              </div>
             </div>
-            <p className="mt-1 text-sm text-gray-600">
-              Guides, FAQs, and quick actions to get you unstuck.
+            <p className="text-slate-600 max-w-2xl">
+              Find answers to common questions, get step-by-step guides, and access support resources to make the most of your workforce management experience.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
+            <Link href="/docs">
+              <Button className="gap-2 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white shadow-md hover:shadow-lg transition-all">
+                <BookOpen className="h-4 w-4" />
+                Documentation
+              </Button>
+            </Link>
             <Link href="/settings/codes">
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" className="gap-2 border-blue-200 text-blue-700 hover:bg-blue-50">
                 <KeyRound className="h-4 w-4" />
                 Join codes
               </Button>
             </Link>
-            <Link href="/employees">
-              <Button variant="outline" className="gap-2">
-                <Users2 className="h-4 w-4" />
-                Manage employees
-              </Button>
-            </Link>
             <Link href="/schedule">
-              <Button className="gap-2">
+              <Button variant="outline" className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50">
                 <CalendarCheck className="h-4 w-4" />
-                Open schedule
+                View schedule
               </Button>
             </Link>
           </div>
@@ -331,8 +368,8 @@ export default function HelpPage() {
                   <div className="text-xs text-gray-500">Share ideas and ask questions</div>
                 </div>
               </div>
-              <a href="mailto:support@example.com" className="text-sm underline">
-                Join
+              <a href="mailto:support@firstshift.app" className="text-sm underline">
+                Contact
               </a>
             </div>
 
@@ -345,7 +382,7 @@ export default function HelpPage() {
                 </div>
               </div>
               <a href={supportMail} className="text-sm underline">
-                support@example.com
+                support@firstshift.app
               </a>
             </div>
 
