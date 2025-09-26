@@ -273,14 +273,6 @@ export default function DashboardPage() {
                 Refresh
               </Button>
             </motion.div>
-            {isAdmin && (
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button className="rounded-xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-700 hover:to-fuchsia-700 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Quick Actions
-                </Button>
-              </motion.div>
-            )}
           </motion.div>
         </div>
       </motion.div>

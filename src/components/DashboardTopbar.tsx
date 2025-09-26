@@ -126,7 +126,7 @@ export default function DashboardTopbar() {
               {/* Enhanced Brand Row - Fixed */}
               <div className="flex-shrink-0 flex items-center px-6 py-6 border-b border-slate-200">
                 <Link href="/" className="flex items-center gap-3 group">
-                 <Image src="/logo.svg" alt="FirstShift Logo" width={132} height={32} className="h-8 w-8 rounded-md bg-gradient-to-br from-violet-500/20 to-purple-500/20 p-1 ring-1 ring-white/30 group-hover:from-violet-500/30 group-hover:to-purple-500/30 transition-colors" />
+                 <Image src="/logo.svg" alt="FirstShift Logo" width={132} height={32} />
                  </Link>
               </div>
 

@@ -469,7 +469,7 @@ export default function TimeOffPage() {
           />
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex overflow-auto gap-3">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[140px] border-slate-300">
               <SelectValue placeholder="Status" />
