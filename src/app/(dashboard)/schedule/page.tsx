@@ -1244,7 +1244,7 @@ export default function SchedulePage() {
                             ) : dayShifts.length > 0 ? (
                               <div className="space-y-1">
                                 {dayShifts.map((s) => (
-                                  <div key={s.id} className="bg-blue-50 border border-blue-200 px-2 py-1 text-sm">
+                                  <div key={s.id} className="bg-blue-50 border border-blue-200 rounded px-2 py-1 text-sm">
                                     <div className="font-medium text-slate-800">
                                       {format(new Date(s.starts_at), "h:mm a")}
                                     </div>
