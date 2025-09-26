@@ -1185,7 +1185,7 @@ export default function SchedulePage() {
               <table className="w-full border-collapse">
                 <thead>
                   <tr>
-                    <th className="border border-slate-300 p-2 font-bold text-left text-slate-800">
+                    <th className="border border-slate-300 p-2 font-bold text-left text-lg text-slate-800">
                       Employee
                     </th>
                     {eachDayISO(exportStart, exportEnd).map((dayISO) => (
@@ -1214,9 +1214,6 @@ export default function SchedulePage() {
                                 <div key={s.id} className="bg-white/60 rounded px-2 py-1 text-sm font-medium">
                                   <div>{format(new Date(s.starts_at), "h:mm a")}</div>
                                   <div className="text-xs text-slate-600">to {format(new Date(s.ends_at), "h:mm a")}</div>
-                                  {s.position?.name && (
-                                    <div className="text-xs text-orange-700 font-medium">{s.position.name}</div>
-                                  )}
                                 </div>
                               ))}\n                            </div>
                           ) : (
@@ -1232,16 +1229,7 @@ export default function SchedulePage() {
                     <tr key={emp.id} className={index % 2 === 0 ? "bg-white" : "bg-slate-50/40"}>
                       <td className="border border-slate-300 p-4">
                         <div className="space-y-1">
-                          <div className="font-bold text-slate-800">{emp.full_name}</div>
-                          <div className="text-sm text-slate-600 flex items-center gap-2">
-                            {emp.position?.name || "No position"}
-                            {emp.position?.color && (
-                              <div
-                                className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: emp.position.color }}
-                              />
-                            )}
-                          </div>
+                          <div className="font-bold text-lg text-slate-800">{emp.full_name}</div>
                         </div>
                       </td>
                       {eachDayISO(exportStart, exportEnd).map((dayISO) => {
@@ -1256,18 +1244,14 @@ export default function SchedulePage() {
                             ) : dayShifts.length > 0 ? (
                               <div className="space-y-1">
                                 {dayShifts.map((s) => (
-                                  <div key={s.id} className="bg-blue-50 border border-blue-200 rounded px-2 py-1 text-sm">
+                                  <div key={s.id} className="bg-blue-50 border border-blue-200 px-2 py-1 text-sm">
                                     <div className="font-medium text-slate-800">
                                       {format(new Date(s.starts_at), "h:mm a")}
                                     </div>
                                     <div className="text-xs text-slate-600">
                                       to {format(new Date(s.ends_at), "h:mm a")}
                                     </div>
-                                    {s.position?.name && (
-                                      <div className="text-xs font-medium" style={{ color: s.position.color || "#64748b" }}>
-                                        {s.position.name}
-                                      </div>
-                                    )}
+        
                                   </div>
                                 ))}
                               </div>
