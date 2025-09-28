@@ -32,10 +32,9 @@ type Row = {
   employee_id: string;
   starts_at: string;
   ends_at: string;
-  type: "vacation" | "sick" | "unpaid" | "personal" | "other";
+  type: "vacation" | "sick" | "unpaid" | "other";
   reason: string | null;
   status: "pending" | "approved" | "denied";
-  created_at?: string;
   employees?: { full_name: string; avatar_url: string | null };
 };
 
@@ -66,7 +65,6 @@ const TypeBadge = ({ type }: { type: Row["type"] }) => {
     vacation: { label: "Vacation", className: "bg-blue-50 text-blue-700 border-blue-200", icon: CalendarDays },
     sick: { label: "Sick Leave", className: "bg-red-50 text-red-700 border-red-200", icon: Heart },
     unpaid: { label: "Unpaid Leave", className: "bg-slate-50 text-slate-700 border-slate-200", icon: Briefcase },
-    personal: { label: "Personal", className: "bg-purple-50 text-purple-700 border-purple-200", icon: User },
     other: { label: "Other", className: "bg-orange-50 text-orange-700 border-orange-200", icon: AlertCircle },
   };
   const { label, className, icon: Icon } = config[type];
@@ -137,6 +135,10 @@ const RequestForm = ({ open, onOpenChange, onSuccess, employees }: {
     }
 
     setLoading(true);
+
+    // Get current user for created_by field
+    const { data: { user } } = await sb.auth.getUser();
+
     const { error } = await sb.from("time_off").insert({
       org_id: orgId,
       employee_id: formData.employee_id,
@@ -144,12 +146,14 @@ const RequestForm = ({ open, onOpenChange, onSuccess, employees }: {
       ends_at: formData.end_date,
       type: formData.type,
       reason: formData.reason.trim() || null,
-      status: 'pending'
+      status: 'pending',
+      created_by: user?.id || null
     });
 
     setLoading(false);
     if (error) {
-      toast.error("Failed to submit request");
+      console.error("Time off submission error:", error);
+      toast.error("Failed to submit request: " + error.message);
       return;
     }
 
@@ -228,7 +232,6 @@ const RequestForm = ({ open, onOpenChange, onSuccess, employees }: {
               <SelectContent>
                 <SelectItem value="vacation">🏖️ Vacation</SelectItem>
                 <SelectItem value="sick">🤒 Sick Leave</SelectItem>
-                <SelectItem value="personal">👤 Personal</SelectItem>
                 <SelectItem value="unpaid">💼 Unpaid Leave</SelectItem>
                 <SelectItem value="other">📋 Other</SelectItem>
               </SelectContent>
@@ -280,14 +283,14 @@ export default function TimeOffPage() {
   const loadData = React.useCallback(async () => {
     if (!orgId) return;
 
-    const [{ data: timeOffData }, { data: employeesData }] = await Promise.all([
+    const [{ data: timeOffData, error: timeOffError }, { data: employeesData, error: employeesError }] = await Promise.all([
       sb.from("time_off")
         .select(`
-          id, employee_id, starts_at, ends_at, type, reason, status, created_at,
+          id, employee_id, starts_at, ends_at, type, reason, status,
           employees!employee_id(full_name, avatar_url)
         `)
         .eq("org_id", orgId)
-        .order("created_at", { ascending: false }),
+        .order("starts_at", { ascending: false }),
       sb.from("employees")
         .select("id, full_name, avatar_url")
         .eq("org_id", orgId)
@@ -295,7 +298,19 @@ export default function TimeOffPage() {
         .order("full_name")
     ]);
 
-    if (timeOffData) setRows(timeOffData as any);
+    if (timeOffError) {
+      console.error("Error loading time off data:", timeOffError);
+    }
+    if (employeesError) {
+      console.error("Error loading employees data:", employeesError);
+    }
+
+    if (timeOffData) {
+      console.log("Loaded time off data:", timeOffData);
+      setRows(timeOffData as any);
+    } else {
+      console.log("No time off data returned");
+    }
     if (employeesData) setEmployees(employeesData as Employee[]);
   }, [orgId, sb]);
 
@@ -344,9 +359,9 @@ export default function TimeOffPage() {
     const denied = rows.filter(r => r.status === 'denied').length;
 
     const thisMonth = rows.filter(r => {
-      const created = new Date(r.created_at || r.starts_at);
+      const requestDate = new Date(r.starts_at);
       const now = new Date();
-      return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+      return requestDate.getMonth() === now.getMonth() && requestDate.getFullYear() === now.getFullYear();
     }).length;
 
     return { total, pending, approved, denied, thisMonth };
@@ -490,7 +505,6 @@ export default function TimeOffPage() {
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="vacation">Vacation</SelectItem>
               <SelectItem value="sick">Sick Leave</SelectItem>
-              <SelectItem value="personal">Personal</SelectItem>
               <SelectItem value="unpaid">Unpaid</SelectItem>
               <SelectItem value="other">Other</SelectItem>
             </SelectContent>
@@ -578,7 +592,7 @@ export default function TimeOffPage() {
                                   {format(new Date(row.starts_at), 'MMM d')} - {format(new Date(row.ends_at), 'MMM d, yyyy')}
                                 </div>
                                 <div className="text-slate-500 text-xs">
-                                  {format(new Date(row.created_at || row.starts_at), 'MMM d, yyyy')} • Requested
+                                  {format(new Date(row.starts_at), 'MMM d, yyyy')} • Requested
                                 </div>
                               </div>
                             </TableCell>

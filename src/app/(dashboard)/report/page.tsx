@@ -313,7 +313,10 @@ export default function ReportPage() {
     const totalHours = scopedShifts.reduce((acc, s) => acc + hoursForShift(s), 0);
     const completed = scopedShifts.filter((s) => s.status === "completed").length;
     const scheduled = scopedShifts.length;
+    const cancelled = scopedShifts.filter((s) => s.status === "cancelled").length;
     const approvedTO = scopedTimeOff.filter((t) => t.status === "approved");
+    const pendingTO = scopedTimeOff.filter((t) => t.status === "pending");
+
     const approvedDays = approvedTO.reduce((acc, t) => {
       // rough whole-day count inclusive
       const a = new Date(t.starts_at);
@@ -321,13 +324,33 @@ export default function ReportPage() {
       const diff = Math.max(0, Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24)) + 1);
       return acc + diff;
     }, 0);
+
+    // Advanced metrics
+    const avgHoursPerShift = scheduled > 0 ? totalHours / scheduled : 0;
+    const completionRate = scheduled > 0 ? (completed / scheduled) * 100 : 0;
+    const cancellationRate = scheduled > 0 ? (cancelled / scheduled) * 100 : 0;
+    const avgHoursPerEmployee = employees.length > 0 ? totalHours / employees.length : 0;
+
+    // Productivity metrics
+    const productiveHours = scopedShifts
+      .filter(s => s.status === "completed")
+      .reduce((acc, s) => acc + hoursForShift(s), 0);
+
     return {
       totalHours: +totalHours.toFixed(2),
       completedShifts: completed,
       totalShifts: scheduled,
+      cancelledShifts: cancelled,
       approvedTimeOffDays: approvedDays,
+      pendingTimeOffRequests: pendingTO.length,
+      avgHoursPerShift: +avgHoursPerShift.toFixed(2),
+      completionRate: +completionRate.toFixed(1),
+      cancellationRate: +cancellationRate.toFixed(1),
+      avgHoursPerEmployee: +avgHoursPerEmployee.toFixed(2),
+      productiveHours: +productiveHours.toFixed(2),
+      efficiency: totalHours > 0 ? +(productiveHours / totalHours * 100).toFixed(1) : 0,
     };
-  }, [scopedShifts, scopedTimeOff]);
+  }, [scopedShifts, scopedTimeOff, employees]);
 
   // ---- UI helpers ----
   const employeeTableRows = React.useMemo(() => {
@@ -504,20 +527,20 @@ export default function ReportPage() {
           </CardContent>
         </Card>
 
-        {/* Enhanced KPI Dashboard */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Enhanced KPI Dashboard with More Metrics */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white rounded-2xl overflow-hidden">
-            <CardContent className="p-6">
+            <CardContent className="p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-blue-100 text-sm font-medium">Total Hours</p>
-                  <p className="text-3xl font-bold mt-2">{kpis.totalHours}</p>
+                  <p className="text-blue-100 text-xs lg:text-sm font-medium">Total Hours</p>
+                  <p className="text-2xl lg:text-3xl font-bold mt-1 lg:mt-2">{kpis.totalHours}</p>
                   <p className="text-blue-200 text-xs mt-1">
-                    {kpis.totalShifts > 0 ? (kpis.totalHours / kpis.totalShifts).toFixed(1) : 0} avg per shift
+                    {kpis.avgHoursPerShift}h avg/shift
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="h-10 w-10 lg:h-12 lg:w-12 bg-white/20 rounded-xl flex items-center justify-center">
+                  <svg className="h-5 w-5 lg:h-6 lg:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
@@ -526,17 +549,17 @@ export default function ReportPage() {
           </Card>
 
           <Card className="shadow-lg border-0 bg-gradient-to-br from-green-500 via-green-600 to-green-700 text-white rounded-2xl overflow-hidden">
-            <CardContent className="p-6">
+            <CardContent className="p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-green-100 text-sm font-medium">Total Shifts</p>
-                  <p className="text-3xl font-bold mt-2">{kpis.totalShifts}</p>
+                  <p className="text-green-100 text-xs lg:text-sm font-medium">Total Shifts</p>
+                  <p className="text-2xl lg:text-3xl font-bold mt-1 lg:mt-2">{kpis.totalShifts}</p>
                   <p className="text-green-200 text-xs mt-1">
-                    {employees.length > 0 ? (kpis.totalShifts / employees.length).toFixed(1) : 0} avg per employee
+                    {kpis.avgHoursPerEmployee}h per employee
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="h-10 w-10 lg:h-12 lg:w-12 bg-white/20 rounded-xl flex items-center justify-center">
+                  <svg className="h-5 w-5 lg:h-6 lg:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
@@ -545,17 +568,17 @@ export default function ReportPage() {
           </Card>
 
           <Card className="shadow-lg border-0 bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 text-white rounded-2xl overflow-hidden">
-            <CardContent className="p-6">
+            <CardContent className="p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-purple-100 text-sm font-medium">Completed Shifts</p>
-                  <p className="text-3xl font-bold mt-2">{kpis.completedShifts}</p>
+                  <p className="text-purple-100 text-xs lg:text-sm font-medium">Completion Rate</p>
+                  <p className="text-2xl lg:text-3xl font-bold mt-1 lg:mt-2">{kpis.completionRate}%</p>
                   <p className="text-purple-200 text-xs mt-1">
-                    {kpis.totalShifts > 0 ? ((kpis.completedShifts / kpis.totalShifts) * 100).toFixed(1) : 0}% completion rate
+                    {kpis.completedShifts} completed
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="h-10 w-10 lg:h-12 lg:w-12 bg-white/20 rounded-xl flex items-center justify-center">
+                  <svg className="h-5 w-5 lg:h-6 lg:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
@@ -564,18 +587,56 @@ export default function ReportPage() {
           </Card>
 
           <Card className="shadow-lg border-0 bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 text-white rounded-2xl overflow-hidden">
-            <CardContent className="p-6">
+            <CardContent className="p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-orange-100 text-sm font-medium">Time Off Days</p>
-                  <p className="text-3xl font-bold mt-2">{kpis.approvedTimeOffDays}</p>
+                  <p className="text-orange-100 text-xs lg:text-sm font-medium">Efficiency</p>
+                  <p className="text-2xl lg:text-3xl font-bold mt-1 lg:mt-2">{kpis.efficiency}%</p>
                   <p className="text-orange-200 text-xs mt-1">
-                    {employees.length > 0 ? (kpis.approvedTimeOffDays / employees.length).toFixed(1) : 0} avg per employee
+                    {kpis.productiveHours}h productive
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <div className="h-10 w-10 lg:h-12 lg:w-12 bg-white/20 rounded-xl flex items-center justify-center">
+                  <svg className="h-5 w-5 lg:h-6 lg:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg border-0 bg-gradient-to-br from-cyan-500 via-cyan-600 to-cyan-700 text-white rounded-2xl overflow-hidden">
+            <CardContent className="p-4 lg:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-cyan-100 text-xs lg:text-sm font-medium">Time Off Days</p>
+                  <p className="text-2xl lg:text-3xl font-bold mt-1 lg:mt-2">{kpis.approvedTimeOffDays}</p>
+                  <p className="text-cyan-200 text-xs mt-1">
+                    {kpis.pendingTimeOffRequests} pending
+                  </p>
+                </div>
+                <div className="h-10 w-10 lg:h-12 lg:w-12 bg-white/20 rounded-xl flex items-center justify-center">
+                  <svg className="h-5 w-5 lg:h-6 lg:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg border-0 bg-gradient-to-br from-rose-500 via-rose-600 to-rose-700 text-white rounded-2xl overflow-hidden">
+            <CardContent className="p-4 lg:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-rose-100 text-xs lg:text-sm font-medium">Cancellation Rate</p>
+                  <p className="text-2xl lg:text-3xl font-bold mt-1 lg:mt-2">{kpis.cancellationRate}%</p>
+                  <p className="text-rose-200 text-xs mt-1">
+                    {kpis.cancelledShifts} cancelled
+                  </p>
+                </div>
+                <div className="h-10 w-10 lg:h-12 lg:w-12 bg-white/20 rounded-xl flex items-center justify-center">
+                  <svg className="h-5 w-5 lg:h-6 lg:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </div>
               </div>
@@ -583,10 +644,97 @@ export default function ReportPage() {
           </Card>
         </div>
 
+        {/* Comprehensive Insights Section */}
+        <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm rounded-2xl">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-800">
+              <svg className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+              Performance Insights & Recommendations
+            </CardTitle>
+            <p className="text-sm text-slate-600">AI-powered analysis of your workforce performance</p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {/* Performance Score */}
+              <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-sm font-semibold text-green-800">Overall Performance</div>
+                  <div className="text-2xl font-bold text-green-700">
+                    {Math.round((kpis.completionRate + kpis.efficiency) / 2)}%
+                  </div>
+                </div>
+                <div className="text-xs text-green-600">
+                  {kpis.completionRate >= 90 ? "Excellent completion rate" :
+                   kpis.completionRate >= 75 ? "Good completion rate" : "Needs improvement"}
+                </div>
+              </div>
+
+              {/* Workload Distribution */}
+              <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-sm font-semibold text-blue-800">Workload Balance</div>
+                  <div className="text-2xl font-bold text-blue-700">
+                    {employees.length > 0 ? Math.round((kpis.totalShifts / employees.length) * 10) / 10 : 0}
+                  </div>
+                </div>
+                <div className="text-xs text-blue-600">
+                  {kpis.avgHoursPerEmployee >= 40 ? "High workload" :
+                   kpis.avgHoursPerEmployee >= 20 ? "Balanced workload" : "Light workload"}
+                </div>
+              </div>
+
+              {/* Resource Utilization */}
+              <div className="p-4 bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl border border-purple-200">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-sm font-semibold text-purple-800">Resource Efficiency</div>
+                  <div className="text-2xl font-bold text-purple-700">{kpis.efficiency}%</div>
+                </div>
+                <div className="text-xs text-purple-600">
+                  {kpis.efficiency >= 85 ? "Highly efficient" :
+                   kpis.efficiency >= 70 ? "Good efficiency" : "Optimize scheduling"}
+                </div>
+              </div>
+            </div>
+
+            {/* Action Items */}
+            <div className="mt-6 pt-4 border-t border-slate-200">
+              <div className="text-sm font-semibold text-slate-800 mb-3">📊 Key Recommendations</div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {kpis.cancellationRate > 5 && (
+                  <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                    <div className="text-sm font-medium text-red-800">Reduce Cancellations</div>
+                    <div className="text-xs text-red-600 mt-1">High cancellation rate ({kpis.cancellationRate}%) detected</div>
+                  </div>
+                )}
+                {kpis.avgHoursPerEmployee < 20 && (
+                  <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div className="text-sm font-medium text-yellow-800">Increase Utilization</div>
+                    <div className="text-xs text-yellow-600 mt-1">Employees averaging only {kpis.avgHoursPerEmployee}h</div>
+                  </div>
+                )}
+                {kpis.pendingTimeOffRequests > 3 && (
+                  <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                    <div className="text-sm font-medium text-orange-800">Review Time Off Requests</div>
+                    <div className="text-xs text-orange-600 mt-1">{kpis.pendingTimeOffRequests} requests awaiting approval</div>
+                  </div>
+                )}
+                {kpis.efficiency > 85 && (
+                  <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                    <div className="text-sm font-medium text-green-800">Great Performance!</div>
+                    <div className="text-xs text-green-600 mt-1">Team operating at {kpis.efficiency}% efficiency</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Enhanced Admin/Manager Analytics */}
         {(role === "admin" || role === "manager") && (
           <>
-            <div className="grid gap-6 xl:grid-cols-3">
+            <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
               {/* Enhanced Hours by Employee Chart */}
               <Card className="xl:col-span-2 shadow-lg border-0 bg-white/80 backdrop-blur-sm rounded-2xl">
                 <CardHeader className="pb-4">
@@ -598,9 +746,9 @@ export default function ReportPage() {
                   </CardTitle>
                   <p className="text-sm text-slate-600">Total hours worked by each team member</p>
                 </CardHeader>
-                <CardContent className="h-[380px]">
+                <CardContent className="h-[300px] sm:h-[380px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={employeeTableRows} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                    <BarChart data={employeeTableRows} margin={{ top: 20, right: 15, left: 15, bottom: 60 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis
                         dataKey="name"
@@ -609,6 +757,7 @@ export default function ReportPage() {
                         height={80}
                         fontSize={12}
                         stroke="#64748b"
+                        interval={0}
                       />
                       <YAxis fontSize={12} stroke="#64748b" />
                       <Tooltip
@@ -659,7 +808,7 @@ export default function ReportPage() {
                   </CardTitle>
                   <p className="text-sm text-slate-600">Hours allocation by role</p>
                 </CardHeader>
-                <CardContent className="h-[380px]">
+                <CardContent className="h-[300px] sm:h-[380px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Tooltip
@@ -667,11 +816,13 @@ export default function ReportPage() {
                           backgroundColor: 'rgba(255, 255, 255, 0.95)',
                           border: '1px solid #e2e8f0',
                           borderRadius: '12px',
-                          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
+                          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+                          fontSize: '12px'
                         }}
                       />
                       <Legend
-                        wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }}
+                        wrapperStyle={{ fontSize: '11px', paddingTop: '15px' }}
+                        iconSize={12}
                       />
                       <Pie
                         data={Array.from(totalsByPosition.entries()).map(([posId, rec]) => ({
@@ -684,10 +835,10 @@ export default function ReportPage() {
                         dataKey="value"
                         nameKey="name"
                         cx="50%"
-                        cy="50%"
-                        outerRadius={120}
-                        innerRadius={60}
-                        paddingAngle={2}
+                        cy="45%"
+                        outerRadius="80%"
+                        innerRadius="40%"
+                        paddingAngle={3}
                       >
                         {Array.from(totalsByPosition.keys()).map((_, idx) => (
                           <Cell
@@ -714,15 +865,16 @@ export default function ReportPage() {
                 </CardTitle>
                 <p className="text-sm text-slate-600">Daily hours progression and workload distribution</p>
               </CardHeader>
-              <CardContent className="h-[350px]">
+              <CardContent className="h-[300px] sm:h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={dailyTotals} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <LineChart data={dailyTotals} margin={{ top: 20, right: 15, left: 15, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis
                       dataKey="day"
                       tickFormatter={(d) => format(parseISO(d), "MM/dd")}
-                      fontSize={12}
+                      fontSize={11}
                       stroke="#64748b"
+                      interval="preserveStartEnd"
                     />
                     <YAxis fontSize={12} stroke="#64748b" />
                     <Tooltip
