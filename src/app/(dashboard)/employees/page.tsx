@@ -6,6 +6,8 @@ import { useOrg } from "@/components/providers/OrgProvider";
 import { usePermissions } from "@/app/hooks/usePermissions";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { NoSSR } from "@/components/ui/no-ssr";
+import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -29,7 +31,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Loader2, MoreHorizontal, Plus, Search, Users, UserCheck, UserX,
-  Filter, Download, Eye, Edit, Trash2, Shield, Crown, User
+  Filter, Download, Eye, Edit, Trash2, Shield, Crown, User, FileText, Printer
 } from "lucide-react";
 
 import AddEmployeeDialog from "@/components/employees/AddEmployeeDialog";
@@ -88,28 +90,56 @@ const StatsCard = ({ title, value, subtitle, icon: Icon, color, trend }: {
   color: string;
   trend?: number;
 }) => (
-  <Card className="bg-white/95 border-slate-200 shadow-sm hover:shadow-md transition-all duration-200">
-    <CardContent className="p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">{title}</p>
-          <p className={`text-2xl font-bold ${color} mt-1`}>{value}</p>
-          <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    whileHover={{ y: -2, scale: 1.02 }}
+    transition={{ duration: 0.2 }}
+  >
+    <Card className="bg-white/95 border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 relative overflow-hidden">
+      {/* Gradient overlay */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${color.includes('blue') ? 'from-blue-50/50 to-indigo-50/50' : color.includes('emerald') ? 'from-emerald-50/50 to-green-50/50' : 'from-purple-50/50 to-pink-50/50'} opacity-0 hover:opacity-100 transition-opacity duration-300`} />
+
+      <CardContent className="p-4 sm:p-6 relative z-10">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex-1">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{title}</p>
+            <motion.p
+              className={`text-2xl sm:text-3xl font-bold ${color} mt-2`}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+            >
+              {value}
+            </motion.p>
+            <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
+          </div>
+          <motion.div
+            className={`p-3 rounded-xl bg-white/80 shadow-sm border border-slate-200/50 backdrop-blur-sm`}
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            transition={{ type: "spring", stiffness: 400 }}
+          >
+            <Icon className={`h-5 w-5 ${color.replace('text-', 'text-')}`} />
+          </motion.div>
         </div>
-        <div className={`p-2 rounded-lg bg-white shadow-sm border border-slate-200`}>
-          <Icon className={`h-4 w-4 ${color.replace('text-', 'text-')}`} />
-        </div>
-      </div>
-      {trend && (
-        <div className="mt-2 flex items-center text-xs">
-          <span className={trend > 0 ? "text-green-600" : "text-red-600"}>
-            {trend > 0 ? '↗' : '↘'} {Math.abs(trend)}%
-          </span>
-          <span className="text-slate-500 ml-1">vs last month</span>
-        </div>
-      )}
-    </CardContent>
-  </Card>
+        {trend && (
+          <motion.div
+            className="flex items-center text-xs bg-white/60 rounded-lg px-2 py-1 backdrop-blur-sm"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <span className={`font-medium ${
+              trend > 0 ? "text-emerald-600" : "text-red-600"
+            }`}>
+              {trend > 0 ? '↗' : '↘'} {Math.abs(trend)}%
+            </span>
+            <span className="text-slate-500 ml-2">vs last month</span>
+          </motion.div>
+        )}
+      </CardContent>
+    </Card>
+  </motion.div>
 );
 
 /* ================== Main Page Component ================== */
@@ -126,11 +156,13 @@ export default function EmployeesPage() {
   const [q, setQ] = React.useState("");
   const [openAdd, setOpenAdd] = React.useState(false);
   const [viewMode, setViewMode] = React.useState<'table' | 'grid'>('table');
+  const [isLoading, setIsLoading] = React.useState(true);
 
   // delete / deactivate dialog state
   const [confirmId, setConfirmId] = React.useState<string | null>(null);
   const [confirmName, setConfirmName] = React.useState<string>("");
   const [busy, setBusy] = React.useState(false);
+  const [lastUpdate, setLastUpdate] = React.useState(new Date());
 
   // per-row spinner for position change
   const [updatingPos, setUpdatingPos] = React.useState<Record<string, boolean>>({});
@@ -154,17 +186,24 @@ export default function EmployeesPage() {
 
   const loadEmployees = React.useCallback(async () => {
     if (!orgId) return;
+    setIsLoading(true);
+
     const { data, error } = await sb
       .from("employees")
       .select("id, full_name, avatar_url, active, position_id, positions:position_id(name)")
       .eq("org_id", orgId)
       .order("full_name");
+
     if (error) {
       console.error("Error loading employees:", error);
       toast.error("Failed to load employees");
+      setIsLoading(false);
       return;
     }
+
     setRows((data || []).map(normalizeEmployee));
+    setLastUpdate(new Date());
+    setIsLoading(false);
   }, [orgId, sb]);
 
   const loadPositions = React.useCallback(async () => {
@@ -278,43 +317,109 @@ export default function EmployeesPage() {
 
   if (loading || !orgId) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex items-center gap-3 text-slate-600">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span className="text-lg font-medium">Loading employees...</span>
+      <NoSSR showLoader>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center gap-4 text-slate-600"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            >
+              <Loader2 className="h-8 w-8 text-blue-600" />
+            </motion.div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-slate-800">Loading Employee Data</div>
+              <div className="text-sm text-slate-500 mt-1">Please wait while we fetch your team...</div>
+            </div>
+          </motion.div>
         </div>
-      </div>
+      </NoSSR>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
+    <NoSSR>
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="space-y-6 lg:space-y-8"
       >
-        <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 via-blue-700 to-indigo-700 bg-clip-text text-transparent">
-            Employee Management
-          </h1>
-          <p className="text-slate-600 mt-1">Manage your team members and their roles</p>
-        </div>
+        {/* Enhanced Page Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white/90 backdrop-blur-xl border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-sm"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-1">
+              <motion.h1
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-slate-800 via-blue-700 to-indigo-700 bg-clip-text text-transparent"
+              >
+                Employee Management
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-slate-600 mt-2 text-sm sm:text-base"
+              >
+                Manage your team members, roles, and organizational structure
+              </motion.p>
 
-        <div className="flex items-center gap-3">
-          <EmployeeHelpButton />
-          {canManage && (
-            <Button
-              onClick={() => setOpenAdd(true)}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-200"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Employee
-            </Button>
-          )}
-        </div>
-      </motion.div>
+              {/* Live status indicator */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="flex items-center gap-3 mt-3"
+              >
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-200">
+                  <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium text-emerald-700">Live Data</span>
+                </div>
+                <div className="text-xs text-slate-500">
+                  Last updated: {format(lastUpdate, "h:mm a")}
+                </div>
+              </motion.div>
+            </div>
+
+            <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                <EmployeeHelpButton />
+              </motion.div>
+
+              {canManage && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.5 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Button
+                    onClick={() => setOpenAdd(true)}
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 text-white font-semibold"
+                    size="lg"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Add Employee</span>
+                    <span className="sm:hidden">Add</span>
+                  </Button>
+                </motion.div>
+              )}
+            </div>
+          </div>
+        </motion.div>
 
       {/* Statistics Cards */}
       <motion.div
@@ -354,61 +459,143 @@ export default function EmployeesPage() {
         />
       </motion.div>
 
-      {/* Filters and Controls */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="flex flex-col sm:flex-row gap-4 bg-white/95 p-4 rounded-xl border border-slate-200 shadow-sm"
-      >
-        {/* Search */}
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-          <Input
-            placeholder="Search employees..."
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className="pl-10 border-slate-300 focus:border-blue-500 focus:ring-blue-500/20"
-          />
-        </div>
+        {/* Enhanced Filters and Controls */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-sm"
+        >
+          <div className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
+            {/* Search */}
+            <div className="relative flex-1 lg:max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+              <Input
+                placeholder="Search employees by name..."
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                className="pl-10 border-slate-300 focus:border-blue-500 focus:ring-blue-500/20 bg-white/50 h-11"
+              />
+              {q && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setQ("")}
+                    className="h-6 w-6 p-0 hover:bg-slate-100"
+                  >
+                    ×
+                  </Button>
+                </motion.div>
+              )}
+            </div>
 
-        {/* Filters */}
-        <div className="flex gap-3">
-          <Select value={posFilter} onValueChange={setPosFilter}>
-            <SelectTrigger className="w-[160px] border-slate-300">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Position" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Positions</SelectItem>
-              {positions.map(pos => (
-                <SelectItem key={pos.id} value={pos.id}>{pos.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row gap-3 lg:gap-4">
+              <div className="flex gap-3">
+                <Select value={posFilter} onValueChange={setPosFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px] border-slate-300 bg-white/50 h-11">
+                    <Filter className="h-4 w-4 mr-2 text-slate-500" />
+                    <SelectValue placeholder="All Positions" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Positions</SelectItem>
+                    {positions.map(pos => (
+                      <SelectItem key={pos.id} value={pos.id}>{pos.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px] border-slate-300">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-[140px] border-slate-300 bg-white/50 h-11">
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        Active
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="inactive">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                        Inactive
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setViewMode(viewMode === 'table' ? 'grid' : 'table')}
-            className="border-slate-300"
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setViewMode(viewMode === 'table' ? 'grid' : 'table')}
+                  className="border-slate-300 bg-white/50 hover:bg-white hover:border-blue-300 transition-all duration-200 h-11"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">
+                    {viewMode === 'table' ? 'Grid View' : 'Table View'}
+                  </span>
+                  <span className="sm:hidden">
+                    {viewMode === 'table' ? 'Grid' : 'Table'}
+                  </span>
+                </Button>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="border-slate-300 bg-white/50 hover:bg-white h-11">
+                      <Download className="h-4 w-4 mr-2" />
+                      <span className="hidden sm:inline">Export</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Export as CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Printer className="h-4 w-4 mr-2" />
+                      Print List
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          </div>
+
+          {/* Results summary */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200"
           >
-            <Eye className="h-4 w-4 mr-2" />
-            {viewMode === 'table' ? 'Grid' : 'Table'}
-          </Button>
-        </div>
-      </motion.div>
+            <div className="text-sm text-slate-600">
+              Showing <span className="font-semibold text-slate-800">{filteredRows.length}</span> of{" "}
+              <span className="font-semibold text-slate-800">{rows.length}</span> employees
+            </div>
+            {(q || posFilter !== "all" || statusFilter !== "all") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setQ("");
+                  setPosFilter("all");
+                  setStatusFilter("all");
+                }}
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+              >
+                Clear filters
+              </Button>
+            )}
+          </motion.div>
+        </motion.div>
 
       {/* Employee List */}
       <motion.div
@@ -677,6 +864,7 @@ export default function EmployeesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </motion.div>
+    </NoSSR>
   );
 }

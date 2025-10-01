@@ -110,11 +110,13 @@ const StatsCard = ({ title, value, subtitle, icon: Icon, color, trend }: {
 );
 
 /* ================== Request Form Component ================== */
-const RequestForm = ({ open, onOpenChange, onSuccess, employees }: {
+const RequestForm = ({ open, onOpenChange, onSuccess, employees, canManage, myEmployeeId }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
   employees: Employee[];
+  canManage: boolean;
+  myEmployeeId: string | null;
 }) => {
   const sb = React.useMemo(() => createClient(), []);
   const { orgId } = useOrg();
@@ -127,10 +129,23 @@ const RequestForm = ({ open, onOpenChange, onSuccess, employees }: {
     reason: '',
   });
 
+  // Auto-select current user's employee ID if not admin/manager
+  React.useEffect(() => {
+    if (!canManage && myEmployeeId && formData.employee_id === '') {
+      setFormData(prev => ({ ...prev, employee_id: myEmployeeId }));
+    }
+  }, [canManage, myEmployeeId, formData.employee_id]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.start_date || !formData.end_date || !formData.employee_id) {
       toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // Security check: Regular employees can only request time off for themselves
+    if (!canManage && formData.employee_id !== myEmployeeId) {
+      toast.error("You can only request time off for yourself");
       return;
     }
 
@@ -211,7 +226,11 @@ const RequestForm = ({ open, onOpenChange, onSuccess, employees }: {
 
           <div className="space-y-2">
             <Label>Employee</Label>
-            <Select value={formData.employee_id} onValueChange={(v) => setFormData(prev => ({...prev, employee_id: v}))}>
+            <Select
+              value={formData.employee_id}
+              onValueChange={(v) => setFormData(prev => ({...prev, employee_id: v}))}
+              disabled={!canManage}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select employee" />
               </SelectTrigger>
@@ -221,6 +240,9 @@ const RequestForm = ({ open, onOpenChange, onSuccess, employees }: {
                 ))}
               </SelectContent>
             </Select>
+            {!canManage && (
+              <p className="text-xs text-slate-500">You can only request time off for yourself</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -277,25 +299,65 @@ export default function TimeOffPage() {
   const [employeeFilter, setEmployeeFilter] = React.useState<string>("all");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [requestDialogOpen, setRequestDialogOpen] = React.useState(false);
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
+  const [myEmployeeId, setMyEmployeeId] = React.useState<string | null>(null);
 
   const canManage = perms.canManageSchedule;
+
+  // Get current user's employee ID
+  React.useEffect(() => {
+    (async () => {
+      if (!orgId) return;
+      const { data: u } = await sb.auth.getUser();
+      const userId = u.user?.id || null;
+      setCurrentUserId(userId);
+      if (!userId) return;
+
+      const { data: emp, error } = await sb
+        .from("employees")
+        .select("id")
+        .eq("org_id", orgId)
+        .eq("profile_id", userId)
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && emp) {
+        setMyEmployeeId(emp.id);
+      }
+    })();
+  }, [sb, orgId]);
 
   const loadData = React.useCallback(async () => {
     if (!orgId) return;
 
+    // For employees, we must have their employee ID to proceed
+    if (!canManage && !myEmployeeId) {
+      console.log("Employee role detected but no employee ID found, skipping data load");
+      return;
+    }
+
+    // Build queries based on role permissions
+    let timeOffQuery = sb.from("time_off")
+      .select(`
+        id, employee_id, starts_at, ends_at, type, reason, status,
+        employees!employee_id(full_name, avatar_url)
+      `)
+      .eq("org_id", orgId);
+
+    let employeesQuery = sb.from("employees")
+      .select("id, full_name, avatar_url")
+      .eq("org_id", orgId)
+      .eq("active", true);
+
+    // If user is employee (not admin/manager), only show their own requests
+    if (!canManage) {
+      timeOffQuery = timeOffQuery.eq("employee_id", myEmployeeId!);
+      employeesQuery = employeesQuery.eq("id", myEmployeeId!);
+    }
+
     const [{ data: timeOffData, error: timeOffError }, { data: employeesData, error: employeesError }] = await Promise.all([
-      sb.from("time_off")
-        .select(`
-          id, employee_id, starts_at, ends_at, type, reason, status,
-          employees!employee_id(full_name, avatar_url)
-        `)
-        .eq("org_id", orgId)
-        .order("starts_at", { ascending: false }),
-      sb.from("employees")
-        .select("id, full_name, avatar_url")
-        .eq("org_id", orgId)
-        .eq("active", true)
-        .order("full_name")
+      timeOffQuery.order("starts_at", { ascending: false }),
+      employeesQuery.order("full_name")
     ]);
 
     if (timeOffError) {
@@ -312,7 +374,7 @@ export default function TimeOffPage() {
       console.log("No time off data returned");
     }
     if (employeesData) setEmployees(employeesData as Employee[]);
-  }, [orgId, sb]);
+  }, [orgId, sb, canManage, myEmployeeId]);
 
   React.useEffect(() => {
     void loadData();
@@ -412,19 +474,19 @@ export default function TimeOffPage() {
 
         <div className="flex items-center gap-3">
           {canManage && (
-            <>
-              <Button variant="outline" className="border-slate-300">
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
-              <Button
-                onClick={() => setRequestDialogOpen(true)}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                New Request
-              </Button>
-            </>
+            <Button variant="outline" className="border-slate-300">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          )}
+          {(canManage || myEmployeeId) && (
+            <Button
+              onClick={() => setRequestDialogOpen(true)}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              New Request
+            </Button>
           )}
         </div>
       </motion.div>
@@ -510,17 +572,19 @@ export default function TimeOffPage() {
             </SelectContent>
           </Select>
 
-          <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
-            <SelectTrigger className="w-[160px] border-slate-300">
-              <SelectValue placeholder="Employee" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Employees</SelectItem>
-              {employees.map(emp => (
-                <SelectItem key={emp.id} value={emp.id}>{emp.full_name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {canManage && (
+            <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
+              <SelectTrigger className="w-[160px] border-slate-300">
+                <SelectValue placeholder="Employee" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Employees</SelectItem>
+                {employees.map(emp => (
+                  <SelectItem key={emp.id} value={emp.id}>{emp.full_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </motion.div>
 
@@ -656,6 +720,8 @@ export default function TimeOffPage() {
         onOpenChange={setRequestDialogOpen}
         onSuccess={loadData}
         employees={employees}
+        canManage={canManage}
+        myEmployeeId={myEmployeeId}
       />
     </div>
   );

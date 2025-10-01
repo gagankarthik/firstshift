@@ -36,6 +36,38 @@ import {
   MousePointer,
   Palette,
   Layers,
+  Brain,
+  Briefcase,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Coffee,
+  DollarSign,
+  FileText,
+  Gift,
+  Heart,
+  Home,
+  Mail,
+  MapPin,
+  Phone,
+  PieChart,
+  Send,
+  Settings,
+  Shield,
+  Smile,
+  Timer,
+  Wifi,
+  Building2,
+  UserCheck,
+  Activity,
+  RefreshCw,
+  Search,
+  Filter,
+  Bell,
+  Database,
+  Cloud,
+  Lock,
+  Cpu,
 } from "lucide-react";
 
 // Fix hydration by using client-side only state
@@ -167,151 +199,221 @@ export default function LandingPage() {
   const y2 = useTransform(scrollY, [0, 1000], [0, -200]);
   const opacity = useTransform(scrollY, [0, 300], [1, 0.8]);
 
-  // Enhanced feature set with detailed benefits and modern metrics
+  // Enhanced FirstShift-specific features with workforce management focus
   const mainFeatures = [
     {
-      icon: <CalendarCheck className="w-6 h-6" />,
-      title: "AI-Powered Scheduling",
-      description: "Smart algorithms automatically optimize schedules based on availability, skills, and business rules.",
-      highlights: ["Conflict-free scheduling", "Automatic optimization", "Smart suggestions"],
+      icon: <Brain className="w-6 h-6" />,
+      title: "AI-Powered Smart Scheduling",
+      description: "Revolutionary AI algorithms that learn your business patterns and automatically create optimal schedules while preventing conflicts and ensuring fair distribution.",
+      highlights: ["Auto conflict resolution", "Fair shift distribution", "Predictive scheduling", "Labor cost optimization"],
+      gradient: "from-blue-600 via-indigo-600 to-purple-600",
+      metric: "95% efficiency gain",
+      category: "AI Automation",
+      liveDemo: true
+    },
+    {
+      icon: <UserCheck className="w-6 h-6" />,
+      title: "Real-Time Team Management",
+      description: "Centralized hub for managing your entire workforce with instant communication, shift swapping, and live attendance tracking.",
+      highlights: ["Live attendance tracking", "Instant shift swaps", "Team chat & notifications", "Performance monitoring"],
+      gradient: "from-emerald-500 via-teal-500 to-cyan-500",
+      metric: "87% engagement boost",
+      category: "Team Management",
+      liveDemo: true
+    },
+    {
+      icon: <Clock className="w-6 h-6" />,
+      title: "Advanced Time & Attendance",
+      description: "GPS-verified clock-ins, automatic break calculations, overtime alerts, and comprehensive timesheet management with photo verification.",
+      highlights: ["GPS clock verification", "Photo punch-ins", "Break auto-calculation", "Overtime prevention"],
+      gradient: "from-orange-500 via-red-500 to-pink-500",
+      metric: "99.8% accuracy",
+      category: "Time Tracking",
+      liveDemo: false
+    },
+    {
+      icon: <Calendar className="w-6 h-6" />,
+      title: "Dynamic Schedule Optimization",
+      description: "Intelligent schedule builder that considers employee preferences, availability, skills, and business requirements for perfect workforce allocation.",
+      highlights: ["Skill-based matching", "Preference consideration", "Cost optimization", "Coverage guarantees"],
       gradient: "from-violet-500 via-purple-500 to-fuchsia-500",
-      metric: "90% faster",
-      category: "Automation"
+      metric: "78% cost reduction",
+      category: "Optimization",
+      liveDemo: true
     },
     {
-      icon: <Users2 className="w-6 h-6" />,
-      title: "Team Collaboration Hub",
-      description: "Real-time communication and collaboration tools that keep your team connected and informed.",
-      highlights: ["Instant messaging", "Team announcements", "Shift swapping"],
-      gradient: "from-blue-500 via-cyan-500 to-teal-500",
-      metric: "85% engagement",
-      category: "Communication"
-    },
-    {
-      icon: <Clock3 className="w-6 h-6" />,
-      title: "Smart Time Tracking",
-      description: "Advanced time tracking with GPS verification, break management, and overtime alerts.",
-      highlights: ["GPS clock-in", "Break tracking", "Overtime alerts"],
-      gradient: "from-emerald-500 via-green-500 to-lime-500",
-      metric: "99.9% accuracy",
-      category: "Tracking"
-    },
-    {
-      icon: <ShieldCheck className="w-6 h-6" />,
-      title: "Enterprise Security",
-      description: "Bank-level security with role-based access, audit trails, and compliance monitoring.",
-      highlights: ["SOC 2 compliant", "Multi-factor auth", "Audit trails"],
-      gradient: "from-amber-500 via-orange-500 to-red-500",
-      metric: "100% secure",
-      category: "Security"
-    },
-    {
-      icon: <Zap className="w-6 h-6" />,
-      title: "Lightning Performance",
-      description: "Built for speed with real-time updates, offline capabilities, and instant sync.",
-      highlights: ["Sub-second loading", "Offline mode", "Real-time sync"],
-      gradient: "from-pink-500 via-rose-500 to-red-500",
-      metric: "<100ms load",
-      category: "Performance"
-    },
-    {
-      icon: <LayoutDashboard className="w-6 h-6" />,
-      title: "Analytics & Insights",
-      description: "Comprehensive analytics with predictive insights, cost optimization, and performance metrics.",
-      highlights: ["Predictive analytics", "Cost insights", "Performance KPIs"],
-      gradient: "from-indigo-500 via-blue-500 to-cyan-500",
+      icon: <PieChart className="w-6 h-6" />,
+      title: "Business Intelligence Dashboard",
+      description: "Real-time analytics and insights with predictive modeling, labor cost analysis, and performance metrics to drive data-driven decisions.",
+      highlights: ["Predictive analytics", "Cost forecasting", "Performance insights", "Custom reporting"],
+      gradient: "from-green-500 via-lime-500 to-yellow-500",
       metric: "360° visibility",
-      category: "Analytics"
+      category: "Analytics",
+      liveDemo: false
+    },
+    {
+      icon: <Shield className="w-6 h-6" />,
+      title: "Enterprise-Grade Security",
+      description: "Bank-level security with end-to-end encryption, role-based access control, audit trails, and compliance monitoring for complete peace of mind.",
+      highlights: ["End-to-end encryption", "Role-based access", "Audit logging", "GDPR compliant"],
+      gradient: "from-red-500 via-rose-500 to-pink-500",
+      metric: "100% secure",
+      category: "Security",
+      liveDemo: false
     },
   ];
 
-  // Enhanced benefits with modern focus
+  // Enhanced benefits focused on workforce management impact
   const benefits = [
     {
       icon: <Rocket className="w-8 h-8" />,
-      title: "Launch in Minutes",
-      description: "Get your entire team scheduled and operational in under 5 minutes with our intelligent setup wizard.",
-      gradient: "from-violet-500 to-purple-500",
+      title: "Deploy in 60 Seconds",
+      description: "Get your entire workforce scheduled and operational instantly with our one-click setup wizard and smart data import.",
+      gradient: "from-blue-500 to-indigo-500",
+      metric: "60 sec setup",
+      highlight: "Fastest deployment"
     },
     {
-      icon: <HeartHandshake className="w-8 h-8" />,
-      title: "Team Happiness",
-      description: "Increase employee satisfaction by 40% with fair scheduling, easy shift swaps, and transparent communication.",
-      gradient: "from-pink-500 to-rose-500",
+      icon: <Heart className="w-8 h-8" />,
+      title: "Boost Team Morale",
+      description: "Increase employee satisfaction by 47% with fair scheduling, flexible shift swapping, and transparent communication channels.",
+      gradient: "from-rose-500 to-pink-500",
+      metric: "+47% satisfaction",
+      highlight: "Happier employees"
     },
     {
-      icon: <TrendingUp className="w-8 h-8" />,
-      title: "ROI Guaranteed",
-      description: "See immediate cost savings through optimized labor allocation and reduced scheduling overhead.",
+      icon: <DollarSign className="w-8 h-8" />,
+      title: "Reduce Labor Costs",
+      description: "Cut labor costs by up to 23% through intelligent scheduling optimization, overtime prevention, and productivity insights.",
       gradient: "from-emerald-500 to-green-500",
+      metric: "23% cost savings",
+      highlight: "Immediate ROI"
+    },
+    {
+      icon: <Timer className="w-8 h-8" />,
+      title: "Save Management Time",
+      description: "Reduce scheduling time by 89% with automated schedule generation, conflict resolution, and employee self-service tools.",
+      gradient: "from-amber-500 to-orange-500",
+      metric: "89% time saved",
+      highlight: "Focus on growth"
     },
   ];
 
-  // Modern industry solutions
+  // Enhanced industry solutions with detailed use cases
   const industries = [
     {
       name: "Healthcare",
       icon: "🏥",
-      description: "24/7 coverage optimization",
-      users: "2,500+ facilities",
-      growth: "+145%"
+      description: "24/7 patient care coverage with nurse-to-patient ratio compliance",
+      users: "3,200+ facilities",
+      growth: "+167%",
+      features: ["Compliance tracking", "Emergency coverage", "Skill-based assignments"],
+      bgGradient: "from-blue-500/10 to-cyan-500/10",
+      borderGradient: "from-blue-500 to-cyan-500"
     },
     {
-      name: "Retail",
+      name: "Retail & Commerce",
       icon: "🛍️",
-      description: "Peak hour management",
-      users: "1,800+ stores",
-      growth: "+120%"
+      description: "Peak hour staffing with sales performance optimization",
+      users: "2,400+ stores",
+      growth: "+143%",
+      features: ["Peak hour staffing", "Sales analytics", "Customer flow matching"],
+      bgGradient: "from-emerald-500/10 to-green-500/10",
+      borderGradient: "from-emerald-500 to-green-500"
     },
     {
       name: "Hospitality",
       icon: "🏨",
-      description: "Event-based scheduling",
-      users: "950+ hotels",
-      growth: "+89%"
+      description: "Event-driven scheduling with guest satisfaction focus",
+      users: "1,650+ venues",
+      growth: "+128%",
+      features: ["Event coordination", "Guest experience", "Seasonal adjustments"],
+      bgGradient: "from-purple-500/10 to-pink-500/10",
+      borderGradient: "from-purple-500 to-pink-500"
     },
     {
       name: "Manufacturing",
       icon: "🏭",
-      description: "Shift optimization",
-      users: "650+ plants",
-      growth: "+67%"
+      description: "Production line optimization with safety compliance",
+      users: "890+ plants",
+      growth: "+89%",
+      features: ["Production scheduling", "Safety compliance", "Efficiency tracking"],
+      bgGradient: "from-orange-500/10 to-red-500/10",
+      borderGradient: "from-orange-500 to-red-500"
+    },
+    {
+      name: "Education",
+      icon: "🎓",
+      description: "Academic scheduling with substitute teacher management",
+      users: "750+ schools",
+      growth: "+112%",
+      features: ["Substitute management", "Academic calendars", "Faculty coordination"],
+      bgGradient: "from-indigo-500/10 to-violet-500/10",
+      borderGradient: "from-indigo-500 to-violet-500"
+    },
+    {
+      name: "Transportation",
+      icon: "🚚",
+      description: "Route optimization with driver compliance tracking",
+      users: "540+ fleets",
+      growth: "+95%",
+      features: ["Route optimization", "Driver compliance", "Fleet management"],
+      bgGradient: "from-teal-500/10 to-blue-500/10",
+      borderGradient: "from-teal-500 to-blue-500"
     },
   ];
 
-  // Enhanced stats
+  // Enhanced stats with workforce management focus
   const stats = [
-    { number: "50K+", label: "Active Users", icon: Users2 },
-    { number: "99.9%", label: "Uptime", icon: Zap },
-    { number: "4.9/5", label: "Rating", icon: Star },
-    { number: "150+", label: "Countries", icon: Globe },
+    { number: "127K+", label: "Active Users", icon: Users2, description: "Workforce managed daily" },
+    { number: "99.97%", label: "Uptime", icon: Zap, description: "Service reliability" },
+    { number: "4.9/5", label: "Rating", icon: Star, description: "Customer satisfaction" },
+    { number: "89+", label: "Countries", icon: Globe, description: "Global presence" },
+    { number: "$2.3M", label: "Cost Saved", icon: DollarSign, description: "Monthly for customers" },
+    { number: "67%", label: "Time Reduction", icon: Clock, description: "In scheduling tasks" },
   ];
 
-  // Testimonials with rich content
+  // Enhanced testimonials with detailed workforce management impact
   const testimonials = [
     {
-      content: "FirstShift revolutionized our scheduling process. We went from spending hours every week to having everything automated. Our team loves the interface and the mobile app is fantastic.",
+      content: "FirstShift transformed our 500-employee operation. Scheduling that took 8 hours weekly now takes 15 minutes. Our labor costs dropped 23% and employee satisfaction soared. The AI is eerily good at predicting our needs.",
       author: "Sarah Chen",
       role: "Operations Director",
-      company: "TechFlow Dynamics",
+      company: "MegaCorp Retail Chain",
       avatar: "/avatars/sarah.jpg",
-      rating: 5
+      rating: 5,
+      metrics: ["23% cost reduction", "87% time saved", "500 employees"],
+      industry: "Retail"
     },
     {
-      content: "The AI scheduling suggestions are incredibly accurate. It's like having a dedicated scheduling manager that never makes mistakes. ROI was immediate.",
-      author: "Marcus Rodriguez",
-      role: "VP Operations",
-      company: "RetailMax Chain",
+      content: "Managing 24/7 healthcare coverage for 200+ nurses was a nightmare. FirstShift ensures perfect compliance with nurse-to-patient ratios while keeping everyone happy. No more last-minute scrambling.",
+      author: "Dr. Marcus Rodriguez",
+      role: "Chief Nursing Officer",
+      company: "Regional Medical Center",
       avatar: "/avatars/marcus.jpg",
-      rating: 5
+      rating: 5,
+      metrics: ["100% compliance", "200+ nurses", "Zero gaps"],
+      industry: "Healthcare"
     },
     {
-      content: "Managing 24/7 healthcare schedules used to be our biggest challenge. FirstShift made it effortless while ensuring we never have coverage gaps.",
-      author: "Dr. Emily Watson",
-      role: "Chief Medical Officer",
-      company: "HealthFirst Hospital",
+      content: "Our hotel's seasonal staffing challenges vanished overnight. FirstShift adapts to our booking patterns and guest flow automatically. Revenue per employee increased 31% in the first quarter.",
+      author: "Emily Watson",
+      role: "General Manager",
+      company: "Luxury Resort & Spa",
       avatar: "/avatars/emily.jpg",
-      rating: 5
+      rating: 5,
+      metrics: ["31% revenue boost", "Seasonal optimization", "Guest satisfaction up"],
+      industry: "Hospitality"
+    },
+    {
+      content: "Manufacturing requires precision. FirstShift's AI understands our production cycles and ensures we have the right skills at the right stations. Downtime reduced by 45%.",
+      author: "David Kim",
+      role: "Plant Manager",
+      company: "Advanced Manufacturing Co.",
+      avatar: "/avatars/david.jpg",
+      rating: 5,
+      metrics: ["45% less downtime", "Skills optimization", "Safety compliance"],
+      industry: "Manufacturing"
     },
   ];
 
@@ -520,7 +622,7 @@ export default function LandingPage() {
             >
               <Sparkles className="w-4 h-4 text-yellow-400" />
               <span className="text-sm font-medium text-gray-200">
-                Introducing AI-Powered Scheduling
+                🚀 Introducing NextGen Workforce AI
               </span>
               <motion.div
                 animate={{ scale: [1, 1.2, 1] }}
@@ -536,12 +638,12 @@ export default function LandingPage() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-5xl sm:text-6xl lg:text-8xl font-black leading-tight mb-6"
             >
-              <span className="bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
-                Schedule
+              <span className="bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
+                Workforce
               </span>
               <br />
-              <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400 bg-clip-text text-transparent">
-                Smarter
+              <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                Revolutionized
               </span>
             </motion.h1>
 
@@ -552,9 +654,10 @@ export default function LandingPage() {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="text-xl sm:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed mb-12"
             >
-              The world's most intelligent workforce management platform.
-              <span className="text-white font-semibold"> Powered by AI</span>,
-              loved by teams, trusted by enterprises.
+              The world's most intelligent workforce management platform that transforms how teams work.
+              <span className="text-white font-semibold"> AI-powered scheduling</span>,
+              <span className="text-blue-400 font-semibold"> real-time collaboration</span>, and
+              <span className="text-purple-400 font-semibold"> enterprise security</span> - all in one beautiful platform.
             </motion.p>
 
             {/* CTA Buttons */}
@@ -594,12 +697,12 @@ export default function LandingPage() {
               </motion.button>
             </motion.div>
 
-            {/* Trust Indicators */}
+            {/* Enhanced Trust Indicators */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.8 }}
-              className="flex flex-col sm:flex-row items-center justify-center space-y-6 sm:space-y-0 sm:space-x-12 text-sm text-gray-400"
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 max-w-5xl mx-auto"
             >
               {stats.map((stat, index) => (
                 <motion.div
@@ -607,11 +710,17 @@ export default function LandingPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 1 + index * 0.1 }}
-                  className="flex items-center space-x-2"
+                  whileHover={{ scale: 1.05, y: -5 }}
+                  className="text-center group cursor-pointer"
                 >
-                  <stat.icon className="w-4 h-4 text-violet-400" />
-                  <span className="font-bold text-white">{stat.number}</span>
-                  <span>{stat.label}</span>
+                  <div className="mb-3 flex justify-center">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <stat.icon className="w-5 h-5 text-blue-400" />
+                    </div>
+                  </div>
+                  <div className="font-bold text-white text-xl mb-1">{stat.number}</div>
+                  <div className="text-gray-400 text-sm font-medium">{stat.label}</div>
+                  <div className="text-gray-500 text-xs mt-1">{stat.description}</div>
                 </motion.div>
               ))}
             </motion.div>
@@ -685,11 +794,11 @@ export default function LandingPage() {
           >
             <motion.div
               variants={fadeInUp}
-              className="inline-flex items-center space-x-2 bg-violet-500/10 backdrop-blur-xl border border-violet-500/20 rounded-full px-6 py-3 mb-6"
+              className="inline-flex items-center space-x-2 bg-blue-500/10 backdrop-blur-xl border border-blue-500/20 rounded-full px-6 py-3 mb-6"
             >
-              <Palette className="w-4 h-4 text-violet-400" />
-              <span className="text-sm font-medium text-violet-300">
-                Powerful Features
+              <Brain className="w-4 h-4 text-blue-400" />
+              <span className="text-sm font-medium text-blue-300">
+                AI-Powered Features
               </span>
             </motion.div>
 
@@ -701,8 +810,8 @@ export default function LandingPage() {
                 Built for the
               </span>
               <br />
-              <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
-                Future of Work
+              <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                Modern Workforce
               </span>
             </motion.h2>
 
@@ -757,18 +866,33 @@ export default function LandingPage() {
                   </p>
 
                   {/* Highlights */}
-                  <ul className="space-y-2 mb-6">
+                  <ul className="space-y-3 mb-6">
                     {feature.highlights.map((highlight, i) => (
-                      <li key={i} className="flex items-center text-sm text-gray-400">
-                        <div className="w-1.5 h-1.5 rounded-full bg-violet-400 mr-3 flex-shrink-0" />
+                      <motion.li
+                        key={i}
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        className="flex items-center text-sm text-gray-400"
+                      >
+                        <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
                         {highlight}
-                      </li>
+                      </motion.li>
                     ))}
                   </ul>
 
-                  {/* Metric */}
-                  <div className={`inline-flex items-center px-4 py-2 bg-gradient-to-r ${feature.gradient} rounded-full text-white font-bold text-sm`}>
-                    {feature.metric}
+                  {/* Metric and Live Demo */}
+                  <div className="space-y-3">
+                    <div className={`inline-flex items-center px-4 py-2 bg-gradient-to-r ${feature.gradient} rounded-full text-white font-bold text-sm shadow-lg`}>
+                      {feature.metric}
+                    </div>
+
+                    {feature.liveDemo && (
+                      <div className="flex items-center justify-center text-xs text-green-400">
+                        <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse" />
+                        Live Demo Available
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -810,26 +934,52 @@ export default function LandingPage() {
             </motion.h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-8">
             {benefits.map((benefit, index) => (
               <motion.div
                 key={benefit.title}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.2 }}
+                transition={{ duration: 0.8, delay: index * 0.15 }}
                 viewport={{ once: true }}
-                whileHover={{ y: -5 }}
-                className="text-center group"
+                whileHover={{ y: -8, scale: 1.02 }}
+                className="text-center group cursor-pointer"
               >
-                <div className={`w-20 h-20 mx-auto mb-8 rounded-3xl bg-gradient-to-br ${benefit.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-                  <span className="text-white">{benefit.icon}</span>
+                <div className="p-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl hover:border-white/20 transition-all duration-500 group-hover:shadow-2xl">
+                  {/* Icon with pulsing effect */}
+                  <div className="relative mb-6">
+                    <motion.div
+                      className={`w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br ${benefit.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}
+                      whileHover={{
+                        boxShadow: "0 20px 40px rgba(59, 130, 246, 0.4)",
+                        rotate: [0, -5, 5, 0]
+                      }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <span className="text-white">{benefit.icon}</span>
+                    </motion.div>
+
+                    {/* Highlight badge */}
+                    <div className="absolute -top-2 -right-2">
+                      <div className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-400 text-black text-xs font-bold rounded-full shadow-lg">
+                        {benefit.highlight}
+                      </div>
+                    </div>
+                  </div>
+
+                  <h3 className="text-xl font-bold text-white mb-4 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-gray-300 group-hover:bg-clip-text transition-all duration-300">
+                    {benefit.title}
+                  </h3>
+
+                  <p className="text-gray-300 leading-relaxed mb-6 text-sm">
+                    {benefit.description}
+                  </p>
+
+                  {/* Metric display */}
+                  <div className={`inline-flex items-center px-4 py-2 bg-gradient-to-r ${benefit.gradient} rounded-full text-white font-bold text-sm shadow-lg`}>
+                    {benefit.metric}
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-4">
-                  {benefit.title}
-                </h3>
-                <p className="text-gray-300 leading-relaxed max-w-sm mx-auto">
-                  {benefit.description}
-                </p>
               </motion.div>
             ))}
           </div>
@@ -870,7 +1020,7 @@ export default function LandingPage() {
             </motion.h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {industries.map((industry, index) => (
               <motion.div
                 key={industry.name}
@@ -878,27 +1028,44 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                whileHover={{ scale: 1.05, y: -5 }}
+                whileHover={{ scale: 1.02, y: -8 }}
                 onMouseEnter={() => setHoveredIndustry(index)}
                 onMouseLeave={() => setHoveredIndustry(null)}
                 className="relative group"
               >
-                <div className="p-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl text-center hover:border-white/20 transition-all duration-300">
-                  <div className="text-5xl mb-4">{industry.icon}</div>
-                  <h3 className="text-xl font-bold text-white mb-2">
+                <div className={`p-8 bg-gradient-to-br ${industry.bgGradient} backdrop-blur-xl border border-white/10 rounded-3xl text-center hover:border-white/20 transition-all duration-500 group-hover:shadow-2xl`}>
+                  {/* Icon with animated gradient */}
+                  <div className="relative mb-6">
+                    <div className="text-6xl mb-2 group-hover:scale-110 transition-transform duration-300">{industry.icon}</div>
+                    <div className={`absolute inset-0 rounded-full bg-gradient-to-r ${industry.borderGradient} opacity-0 group-hover:opacity-20 blur-xl transition-all duration-500`} />
+                  </div>
+
+                  <h3 className="text-xl font-bold text-white mb-3 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-gray-300 group-hover:bg-clip-text transition-all duration-300">
                     {industry.name}
                   </h3>
-                  <p className="text-gray-300 text-sm mb-4">
+
+                  <p className="text-gray-300 text-sm mb-6 leading-relaxed">
                     {industry.description}
                   </p>
-                  <div className="space-y-2">
-                    <p className="text-violet-400 font-semibold">
+
+                  {/* Features list */}
+                  <div className="space-y-2 mb-6">
+                    {industry.features.map((feature, i) => (
+                      <div key={i} className="flex items-center justify-center text-xs text-gray-400">
+                        <div className="w-1 h-1 rounded-full bg-blue-400 mr-2" />
+                        {feature}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="space-y-3">
+                    <p className={`font-bold text-transparent bg-gradient-to-r ${industry.borderGradient} bg-clip-text`}>
                       {industry.users}
                     </p>
-                    <div className="inline-flex items-center px-3 py-1 bg-green-500/20 rounded-full">
-                      <TrendingUp className="w-3 h-3 text-green-400 mr-1" />
-                      <span className="text-green-400 text-xs font-bold">
-                        {industry.growth}
+                    <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-full">
+                      <TrendingUp className="w-3 h-3 text-green-400 mr-2" />
+                      <span className="text-green-400 text-sm font-bold">
+                        {industry.growth} growth
                       </span>
                     </div>
                   </div>
@@ -907,9 +1074,12 @@ export default function LandingPage() {
                 {hoveredIndustry === index && (
                   <motion.div
                     layoutId="industryHover"
-                    className="absolute inset-0 rounded-3xl border-2 border-cyan-400/50 pointer-events-none"
+                    className={`absolute inset-0 rounded-3xl border-2 bg-gradient-to-r ${industry.borderGradient} opacity-50 pointer-events-none`}
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
+                    style={{ padding: '2px' }}
+                  >
+                    <div className="w-full h-full rounded-3xl bg-slate-900" />
+                  </motion.div>
                 )}
               </motion.div>
             ))}
@@ -951,20 +1121,50 @@ export default function LandingPage() {
                 transition={{ duration: 0.5 }}
                 className="max-w-4xl mx-auto"
               >
-                <div className="p-12 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl text-center">
+                <div className="p-12 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl text-center relative overflow-hidden">
+                  {/* Industry badge */}
+                  <div className="absolute top-6 right-6">
+                    <span className="px-3 py-1 text-xs font-semibold bg-blue-500/20 backdrop-blur-xl rounded-full text-blue-300 border border-blue-500/30">
+                      {testimonials[activeTestimonial].industry}
+                    </span>
+                  </div>
+
                   <div className="flex justify-center mb-6">
                     {[...Array(testimonials[activeTestimonial].rating)].map((_, i) => (
-                      <Star key={i} className="w-6 h-6 text-yellow-400 fill-current" />
+                      <motion.div
+                        key={i}
+                        initial={{ scale: 0, rotate: 180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ delay: i * 0.1, type: "spring" }}
+                      >
+                        <Star className="w-6 h-6 text-yellow-400 fill-current" />
+                      </motion.div>
                     ))}
                   </div>
 
-                  <blockquote className="text-2xl sm:text-3xl font-medium text-white leading-relaxed mb-8">
+                  <blockquote className="text-xl sm:text-2xl font-medium text-white leading-relaxed mb-8">
                     "{testimonials[activeTestimonial].content}"
                   </blockquote>
 
+                  {/* Metrics display */}
+                  <div className="flex flex-wrap justify-center gap-3 mb-8">
+                    {testimonials[activeTestimonial].metrics.map((metric, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.5 + i * 0.1 }}
+                        className="px-4 py-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-full text-green-400 text-sm font-semibold"
+                      >
+                        {metric}
+                      </motion.div>
+                    ))}
+                  </div>
+
                   <div className="flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 flex items-center justify-center text-white font-bold text-xl mr-4">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-xl mr-6 relative">
                       {testimonials[activeTestimonial].author.charAt(0)}
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse opacity-50" />
                     </div>
                     <div className="text-left">
                       <div className="font-bold text-white text-lg">
@@ -973,7 +1173,7 @@ export default function LandingPage() {
                       <div className="text-gray-300 text-sm">
                         {testimonials[activeTestimonial].role}
                       </div>
-                      <div className="text-violet-400 text-sm font-semibold">
+                      <div className="text-blue-400 text-sm font-semibold">
                         {testimonials[activeTestimonial].company}
                       </div>
                     </div>
