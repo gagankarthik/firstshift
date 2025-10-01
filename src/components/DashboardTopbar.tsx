@@ -20,6 +20,7 @@ import {
 import { Search, ChevronDown, UserRound, Building2, Menu, Bell, Settings, LogOut, LayoutDashboard, CalendarCheck, Users2, Clock3, Radio, FileBarChart2, BookOpen, Newspaper, HelpCircle } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Sidebar from "@/components/Sidebar";
+import { OrgSwitcher } from "@/components/OrgSwitcher";
 import Image from "next/image";
 
 // ----------------- Topbar Component -----------------
@@ -205,13 +206,8 @@ export default function DashboardTopbar() {
         {/* Enhanced Page Title & Breadcrumb */}
         <div className="flex items-center gap-4 min-w-0 flex-1">
           <div className="min-w-0">
-            {/* Enhanced Organization badge for larger screens */}
-           
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full border border-blue-200 backdrop-blur-xl">
-                <Building2 className="h-3.5 w-3.5 text-blue-600" />
-                <span className="text-sm font-medium text-blue-700 truncate max-w-[200px]">{displayOrg}</span>
-              </div>
-            
+            {/* Enhanced Organization Switcher */}
+            <OrgSwitcher />
           </div>
         </div>
 

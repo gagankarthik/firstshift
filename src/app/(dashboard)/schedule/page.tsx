@@ -43,6 +43,7 @@ import {
   Printer,
   Filter,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -52,6 +53,7 @@ import { ScheduleGrid } from "@/components/schedule/ScheduleGrid";
 import { ScheduleViewDialog } from "@/components/schedule/ScheduleViewDialog";
 import { ShiftDialog } from "@/components/schedule/ShiftDialog";
 import { ExportDialog } from "@/components/schedule/ExportDialog";
+import { AIAssistantDialog } from "@/components/schedule/AIAssistantDialog";
 import { useOverrideConfirm } from "@/components/schedule/hooks/useOverrideConfirm";
 import { useShiftDialog } from "@/components/schedule/hooks/useShiftDialog";
 
@@ -111,6 +113,7 @@ export default function SchedulePage() {
   const [viewOpen, setViewOpen] = React.useState(false);
   const [exportOpen, setExportOpen] = React.useState(false);
   const [printMode, setPrintMode] = React.useState(false);
+  const [aiAssistantOpen, setAiAssistantOpen] = React.useState(false);
 
   // Export range state
   const [exportStart, setExportStart] = React.useState(yyyyMmDd(weekDays[0] || new Date()));
@@ -982,6 +985,15 @@ export default function SchedulePage() {
               <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
+                  onClick={() => setAiAssistantOpen(true)}
+                  className="gap-2 h-10 px-4 bg-gradient-to-r from-purple-50 to-pink-50 border-purple-300 hover:bg-purple-100 text-purple-700 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  <span className="hidden sm:inline">AI Assistant</span>
+                </Button>
+
+                <Button
+                  variant="outline"
                   onClick={() => setViewOpen(true)}
                   className="gap-2 h-10 px-4 bg-white/80 border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
                 >
@@ -1150,6 +1162,34 @@ export default function SchedulePage() {
           onCalendarExport={exportToCalendar}
           getShiftsForEmployeeAndDay={getShiftsForEmployeeAndDay}
           timeOffLabelFor={timeOffLabelFor}
+        />
+
+        {/* AI Assistant Dialog */}
+        <AIAssistantDialog
+          open={aiAssistantOpen}
+          onOpenChange={setAiAssistantOpen}
+          scheduleData={{
+            employees: employees.map((emp) => ({
+              id: emp.id,
+              name: emp.full_name,
+              position: emp.position?.name,
+              availability: availabilityByEmp.get(emp.id) || [],
+              timeOff: timeOffByEmp.get(emp.id) || [],
+            })),
+            shifts: shifts.map((shift) => ({
+              id: shift.id,
+              employee_id: shift.employee_id || "",
+              position: shift.position?.name,
+              location: locations.find((l) => l.id === shift.location_id)?.name,
+              starts_at: shift.starts_at,
+              ends_at: shift.ends_at,
+              status: shift.status,
+            })),
+            dateRange: {
+              start: yyyyMmDd(weekDays[0] || new Date()),
+              end: yyyyMmDd(weekDays[6] || new Date()),
+            },
+          }}
         />
 
         {/* Enhanced Print View (Hidden) */}

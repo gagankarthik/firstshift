@@ -29,6 +29,7 @@ import {
   Line,
   CartesianGrid,
 } from "recharts";
+import { AIReportsAssistant } from "@/components/reports/AIReportsAssistant";
 
 type Role = "admin" | "manager" | "employee";
 
@@ -643,6 +644,17 @@ export default function ReportPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* AI-Powered Analytics Assistant */}
+        {(role === "admin" || role === "manager") && (
+          <AIReportsAssistant
+            reportData={{
+              kpis,
+              employees: employeeTableRows,
+              dateRange: { from, to },
+            }}
+          />
+        )}
 
         {/* Comprehensive Insights Section */}
         <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm rounded-2xl">

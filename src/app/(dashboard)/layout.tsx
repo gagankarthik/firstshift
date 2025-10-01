@@ -6,6 +6,7 @@ import Sidebar from "@/components/Sidebar";
 import DashboardTopbar from "@/components/DashboardTopbar";
 import { OrgProvider } from "@/components/providers/OrgProvider";
 import { NoSSR } from "@/components/ui/no-ssr";
+import { GlobalAIChatbot } from "@/components/GlobalAIChatbot";
 
 // Ensure this route is evaluated per-request (uses cookies for SSR auth).
 export const dynamic = "force-dynamic";
@@ -113,6 +114,11 @@ export default async function DashboardLayout({ children }: { children: ReactNod
             <MobileBottomNav />
           </NoSSR>
         </div>
+
+        {/* Global AI Chatbot */}
+        <NoSSR>
+          <GlobalAIChatbot />
+        </NoSSR>
       </div>
     </OrgProvider>
   );
