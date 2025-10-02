@@ -96,17 +96,7 @@ export function OrgSwitcher() {
     }
   };
 
-  // If only one organization, don't show switcher
-  if (!loading && organizations.length <= 1) {
-    return (
-      <div className="inline-flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full border border-blue-200">
-        <Building2 className="h-3.5 w-3.5 text-blue-600" />
-        <span className="text-sm font-medium text-blue-700 truncate max-w-[200px]">
-          {orgLoading ? "Loading..." : orgName || "No organization"}
-        </span>
-      </div>
-    );
-  }
+  // Always show dropdown with current org name
 
   return (
     <DropdownMenu>
@@ -117,16 +107,31 @@ export function OrgSwitcher() {
         >
           <Building2 className="h-3.5 w-3.5 text-blue-600" />
           <span className="text-sm font-medium text-blue-700 truncate max-w-[200px]">
-            {orgLoading ? "Loading..." : orgName || "No organization"}
+            {orgLoading ? "Loading..." : orgName || "No Organization"}
           </span>
           <ChevronDown className="h-3.5 w-3.5 text-blue-600" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-72 p-2 bg-white/95 backdrop-blur-xl border border-slate-200 shadow-xl rounded-2xl">
-        <DropdownMenuLabel className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-          Switch Organization
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-slate-200" />
+      <DropdownMenuContent align="start" className="w-80 p-2 bg-white/95 backdrop-blur-xl border border-slate-200 shadow-xl rounded-2xl">
+        {/* Create Organization Button - Always at top */}
+        <DropdownMenuItem asChild>
+          <button
+            onClick={() => router.push("/welcome")}
+            className="flex items-center gap-3 px-3 py-3 mb-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 w-full text-left text-white shadow-md"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="font-semibold">Create New Organization</span>
+          </button>
+        </DropdownMenuItem>
+
+        {organizations.length > 0 && (
+          <>
+            <DropdownMenuSeparator className="bg-slate-200 my-2" />
+            <DropdownMenuLabel className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              Your Organizations
+            </DropdownMenuLabel>
+          </>
+        )}
 
         <div className="py-1 max-h-96 overflow-y-auto">
           {loading ? (
@@ -137,73 +142,68 @@ export function OrgSwitcher() {
           ) : organizations.length === 0 ? (
             <div className="px-3 py-8 text-center">
               <Building2 className="mx-auto h-8 w-8 text-slate-400" />
-              <p className="mt-2 text-sm text-slate-600 font-medium">No organizations found</p>
-              <p className="text-xs text-slate-500">Create or join an organization to get started</p>
+              <p className="mt-2 text-sm text-slate-600 font-medium">No organizations yet</p>
+              <p className="text-xs text-slate-500 mt-1">Click "Create New Organization" above to get started</p>
             </div>
           ) : (
             <AnimatePresence>
-              {organizations.map((org, index) => (
-                <motion.div
-                  key={org.id}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <DropdownMenuItem
-                    onClick={() => switchOrganization(org.id)}
-                    className={`
-                      flex items-center justify-between gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all duration-200
-                      ${org.id === orgId
-                        ? "bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200"
-                        : "hover:bg-slate-100"
-                      }
-                    `}
+              {organizations.map((org, index) => {
+                const isActive = org.id === orgId;
+                return (
+                  <motion.div
+                    key={org.id}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
                   >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className={`
-                        flex items-center justify-center h-10 w-10 rounded-xl flex-shrink-0
-                        ${org.id === orgId
-                          ? "bg-gradient-to-br from-blue-500 to-indigo-600"
-                          : "bg-gradient-to-br from-slate-200 to-slate-300"
+                    <DropdownMenuItem
+                      onClick={() => switchOrganization(org.id)}
+                      className={`
+                        flex items-center justify-between gap-3 px-3 py-3 mb-2 rounded-xl cursor-pointer transition-all duration-200
+                        ${isActive
+                          ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 shadow-sm"
+                          : "hover:bg-slate-100 border border-transparent hover:border-slate-200"
                         }
-                      `}>
-                        <Building2 className={`h-5 w-5 ${org.id === orgId ? "text-white" : "text-slate-600"}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className={`font-semibold truncate ${org.id === orgId ? "text-blue-700" : "text-slate-800"}`}>
-                          {org.name}
+                      `}
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className={`
+                          flex items-center justify-center h-10 w-10 rounded-xl flex-shrink-0 shadow-sm
+                          ${isActive
+                            ? "bg-gradient-to-br from-blue-500 to-indigo-600"
+                            : "bg-gradient-to-br from-slate-100 to-slate-200"
+                          }
+                        `}>
+                          <Building2 className={`h-5 w-5 ${isActive ? "text-white" : "text-slate-600"}`} />
                         </div>
-                        <div className="text-xs text-slate-500 truncate capitalize">
-                          {org.role}
+                        <div className="flex-1 min-w-0">
+                          <div className={`font-semibold truncate text-sm ${isActive ? "text-blue-700" : "text-slate-800"}`}>
+                            {org.name}
+                          </div>
+                          <div className="text-xs text-slate-500 truncate capitalize flex items-center gap-1">
+                            <span className={`inline-block w-1.5 h-1.5 rounded-full ${isActive ? 'bg-blue-500' : 'bg-slate-400'}`}></span>
+                            {org.role}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    {org.id === orgId && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                      >
-                        <Check className="h-5 w-5 text-blue-600" />
-                      </motion.div>
-                    )}
-                  </DropdownMenuItem>
-                </motion.div>
-              ))}
+                      {isActive && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        >
+                          <div className="flex items-center justify-center h-6 w-6 rounded-full bg-blue-600">
+                            <Check className="h-4 w-4 text-white" />
+                          </div>
+                        </motion.div>
+                      )}
+                    </DropdownMenuItem>
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
           )}
         </div>
-
-        <DropdownMenuSeparator className="bg-slate-200 mt-2" />
-        <DropdownMenuItem asChild>
-          <button
-            onClick={() => router.push("/onboarding")}
-            className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-blue-50 transition-colors duration-200 w-full text-left text-blue-600"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="font-medium">Create or Join Organization</span>
-          </button>
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

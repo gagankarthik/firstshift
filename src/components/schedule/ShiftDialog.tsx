@@ -18,20 +18,37 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { 
-  Plus, 
-  CalendarIcon, 
-  Trash2, 
-  Loader2, 
-  Clock, 
-  MapPin, 
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Plus,
+  CalendarIcon,
+  Trash2,
+  Loader2,
+  Clock,
+  MapPin,
   User,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Sparkles,
+  TrendingUp
 } from "lucide-react";
 import { EmployeeAvatar } from "./EmployeeAvatar";
 import { formatTimeRange, isValidTimeRange, calculateShiftDuration } from "./utils";
 import type { Employee, Position, Location } from "./types";
+
+type ShiftTemplate = {
+  id: string;
+  name: string;
+  start_time: string;
+  end_time: string;
+  break_minutes: number;
+  position_id?: string;
+  position_name?: string;
+  location_id?: string;
+  location_name?: string;
+  frequency: number;
+  duration_hours: number;
+};
 
 interface ShiftDialogProps {
   open: boolean;
@@ -85,6 +102,44 @@ export function ShiftDialog({
   onSave,
   onDelete,
 }: ShiftDialogProps) {
+  // Fetch shift templates
+  const [templates, setTemplates] = React.useState<ShiftTemplate[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = React.useState(false);
+  const [showAllTemplates, setShowAllTemplates] = React.useState(false);
+
+  React.useEffect(() => {
+    if (open) {
+      fetchTemplates();
+    }
+  }, [open]);
+
+  const fetchTemplates = async () => {
+    setLoadingTemplates(true);
+    try {
+      const response = await fetch('/api/schedule/templates');
+      if (response.ok) {
+        const data = await response.json();
+        setTemplates(data.templates || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch templates:', error);
+    } finally {
+      setLoadingTemplates(false);
+    }
+  };
+
+  const applyTemplate = (template: ShiftTemplate) => {
+    onStartChange(template.start_time);
+    onEndChange(template.end_time);
+    onBreakChange(template.break_minutes.toString());
+    if (template.position_id) {
+      onPositionChange(template.position_id);
+    }
+    if (template.location_id) {
+      onLocationChange(template.location_id);
+    }
+  };
+
   // Validation
   const isValidTime = isValidTimeRange(start, end);
   const shiftDuration = calculateShiftDuration(start, end, parseInt(breakMin) || 0);
@@ -328,104 +383,136 @@ export function ShiftDialog({
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Quick Shift Templates</label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  onStartChange("07:00");
-                  onEndChange("15:00");
-                  onBreakChange("30");
-                }}
-                className="text-xs"
-              >
-                7-3 (8h)
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  onStartChange("15:00");
-                  onEndChange("23:00");
-                  onBreakChange("30");
-                }}
-                className="text-xs"
-              >
-                3-11 (8h)
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  onStartChange("23:00");
-                  onEndChange("07:00");
-                  onBreakChange("30");
-                }}
-                className="text-xs"
-              >
-                11-7 (8h)
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  onStartChange("13:00");
-                  onEndChange("21:00");
-                  onBreakChange("30");
-                }}
-                className="text-xs"
-              >
-                1-9 (8h)
-              </Button>
+          {/* Quick Shift Templates */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-purple-600" />
+                Quick Shift Templates
+              </label>
+              {templates.length > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                  Based on your history
+                </Badge>
+              )}
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  onStartChange("09:00");
-                  onEndChange("17:00");
-                  onBreakChange("60");
-                }}
-                className="text-xs"
-              >
-                9-5 (1h break)
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  onStartChange("08:00");
-                  onEndChange("16:00");
-                  onBreakChange("30");
-                }}
-                className="text-xs"
-              >
-                8-4 (30m break)
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  onStartChange("06:00");
-                  onEndChange("14:00");
-                  onBreakChange("30");
-                }}
-                className="text-xs"
-              >
-                6-2 (8h)
-              </Button>
-            </div>
+
+            {loadingTemplates ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                <span className="ml-2 text-sm text-gray-500">Loading templates...</span>
+              </div>
+            ) : templates.length > 0 ? (
+              <>
+                <ScrollArea className="w-full">
+                  <div className="grid grid-cols-1 gap-2">
+                    {templates.slice(0, showAllTemplates ? templates.length : 6).map((template) => (
+                      <Button
+                        key={template.id}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => applyTemplate(template)}
+                        className="justify-start text-left h-auto py-2 px-3 hover:bg-purple-50 hover:border-purple-300"
+                      >
+                        <div className="flex items-center justify-between w-full gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-medium truncate">{template.name}</div>
+                            <div className="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
+                              <Clock className="h-3 w-3" />
+                              {template.duration_hours}h shift
+                              {template.frequency > 1 && (
+                                <span className="ml-1">• Used {template.frequency}x</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </Button>
+                    ))}
+                  </div>
+                </ScrollArea>
+
+                {templates.length > 6 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowAllTemplates(!showAllTemplates)}
+                    className="w-full text-xs"
+                  >
+                    {showAllTemplates ? 'Show Less' : `Show ${templates.length - 6} More`}
+                  </Button>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                <Sparkles className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">No templates yet</p>
+                <p className="text-xs text-gray-400 mt-1">Templates will appear as you create shifts</p>
+              </div>
+            )}
+
+            {/* Fallback: Common shift templates */}
+            {templates.length === 0 && !loadingTemplates && (
+              <div className="space-y-2 pt-2 border-t">
+                <label className="text-xs font-medium text-gray-600">Common Templates</label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      onStartChange("09:00");
+                      onEndChange("17:00");
+                      onBreakChange("60");
+                    }}
+                    className="text-xs"
+                  >
+                    9-5 (8h)
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      onStartChange("07:00");
+                      onEndChange("15:00");
+                      onBreakChange("30");
+                    }}
+                    className="text-xs"
+                  >
+                    7-3 (8h)
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      onStartChange("15:00");
+                      onEndChange("23:00");
+                      onBreakChange("30");
+                    }}
+                    className="text-xs"
+                  >
+                    3-11 (8h)
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      onStartChange("23:00");
+                      onEndChange("07:00");
+                      onBreakChange("30");
+                    }}
+                    className="text-xs"
+                  >
+                    11-7 (8h)
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

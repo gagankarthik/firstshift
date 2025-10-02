@@ -88,20 +88,38 @@ export function GlobalAIChatbot() {
     setLoading(true);
 
     try {
-      // Here you would call your AI API endpoint
-      // For now, we'll simulate a response
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Call the AI API endpoint with real organization data
+      const response = await fetch("/api/ai/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: input,
+          conversationHistory: messages.slice(1).map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to get AI response");
+      }
+
+      const data = await response.json();
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: generateContextualResponse(input),
+        content: data.response,
         timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, aiMessage]);
-    } catch (error) {
-      toast.error("Failed to get AI response");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to get AI response");
       console.error(error);
     } finally {
       setLoading(false);
@@ -111,28 +129,6 @@ export function GlobalAIChatbot() {
   const handleQuickAction = (prompt: string) => {
     setInput(prompt);
     setTimeout(() => handleSendMessage(), 100);
-  };
-
-  const generateContextualResponse = (query: string): string => {
-    const lowerQuery = query.toLowerCase();
-
-    if (lowerQuery.includes("schedule") && lowerQuery.includes("next week")) {
-      return "I can help you generate next week's schedule! Based on your team's availability and past patterns, I recommend:\n\n1. Assigning Sarah to Monday-Wednesday morning shifts (she has high availability)\n2. Scheduling Mike for evening shifts Tuesday-Thursday\n3. Keeping weekend shifts open for your part-time team\n\nWould you like me to create this schedule automatically?";
-    }
-
-    if (lowerQuery.includes("overtime") || lowerQuery.includes("least")) {
-      return "Based on current data:\n\n📊 Employees with least overtime:\n1. Emily Watson - 2.5 hours\n2. David Chen - 3.2 hours\n3. Lisa Park - 4.1 hours\n\nThese employees have capacity for additional hours if needed. Would you like to assign them extra shifts?";
-    }
-
-    if (lowerQuery.includes("coverage") || lowerQuery.includes("gap")) {
-      return "I've analyzed your schedule and found these coverage gaps:\n\n⚠️ Coverage Issues:\n• Thursday 2-4 PM: Only 1 employee scheduled (need 3)\n• Saturday morning: No manager on duty\n• Sunday evening: Below minimum staffing\n\nI can suggest employees to fill these gaps. Would you like recommendations?";
-    }
-
-    if (lowerQuery.includes("performance") || lowerQuery.includes("insight")) {
-      return "📈 Key Performance Insights:\n\n✅ Strengths:\n• 94% on-time shift starts\n• Low cancellation rate (2.3%)\n• High employee satisfaction\n\n⚠️ Areas to Improve:\n• Weekend coverage inconsistent\n• 3 employees approaching overtime limits\n• Consider cross-training for flexibility\n\nWant detailed recommendations?";
-    }
-
-    return "I can help you with:\n• Creating and optimizing schedules\n• Finding available employees\n• Analyzing performance and trends\n• Identifying coverage gaps\n• Shift swap recommendations\n\nWhat would you like to know more about?";
   };
 
   React.useEffect(() => {

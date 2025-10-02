@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format, startOfWeek, endOfWeek, addDays, isToday, isTomorrow } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import {
   Calendar,
   Clock,
@@ -31,6 +32,10 @@ import {
   CalendarDays,
   Zap,
   Star,
+  Sparkles,
+  Lightbulb,
+  Brain,
+  Loader2,
 } from "lucide-react";
 
 // Types
@@ -78,6 +83,14 @@ export default function DashboardPage() {
   const [employees, setEmployees] = React.useState<EmployeeLite[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [lastUpdate, setLastUpdate] = React.useState(new Date());
+
+  // AI Insights state
+  const [aiInsights, setAiInsights] = React.useState<string | null>(null);
+  const [aiRecommendations, setAiRecommendations] = React.useState<string | null>(null);
+  const [aiAlerts, setAiAlerts] = React.useState<string | null>(null);
+  const [loadingAI, setLoadingAI] = React.useState(false);
+  const [aiLoaded, setAiLoaded] = React.useState(false);
+  const [pendingTimeOffCount, setPendingTimeOffCount] = React.useState(0);
 
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
   const isAdmin = perms.canManageSchedule;
@@ -134,9 +147,17 @@ export default function DashboardPage() {
         .select("id, full_name, role")
         .eq("org_id", orgId);
 
+      // Load pending time off requests
+      const { data: timeOffData } = await sb
+        .from("time_off_requests")
+        .select("id")
+        .eq("org_id", orgId)
+        .eq("status", "pending");
+
       setShifts(weekShifts || []);
       setTodayShifts(todayShiftsData || []);
       setEmployees(employeesData || []);
+      setPendingTimeOffCount(timeOffData?.length || 0);
       setLastUpdate(new Date());
     } catch (error) {
       console.error("Error loading dashboard data:", error);
@@ -218,6 +239,82 @@ export default function DashboardPage() {
       .slice(0, 3);
   }, [shifts, userId]);
 
+  // Load AI insights when button is clicked
+  const loadAIInsights = React.useCallback(async () => {
+    if (!isAdmin || !orgId) return;
+
+    setLoadingAI(true);
+    try {
+      const dashboardData = {
+        totalShifts: stats.totalShifts,
+        assignedShifts: stats.assignedShifts,
+        openShifts: stats.openShifts,
+        totalHours: stats.totalHours,
+        coverageRate: stats.coverageRate,
+        activeEmployees: stats.activeEmployees,
+        totalEmployees: employees.length,
+        utilizationRate: stats.utilizationRate,
+        avgHoursPerShift: stats.avgHoursPerShift,
+        avgShiftsPerEmployee: stats.avgShiftsPerEmployee,
+        hoursTrend: stats.hoursTrend,
+        shiftsTrend: stats.shiftsTrend,
+        todayShiftsCount: todayShifts.length,
+        upcomingShiftsCount: shifts.filter(s => new Date(s.starts_at) > new Date()).length,
+        pendingTimeOffCount: pendingTimeOffCount,
+      };
+
+      // Fetch insights, recommendations, and alerts in parallel
+      const [insightsRes, recommendationsRes, alertsRes] = await Promise.all([
+        fetch('/api/ai/dashboard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'insights', dashboardData }),
+        }),
+        fetch('/api/ai/dashboard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'recommendations', dashboardData }),
+        }),
+        fetch('/api/ai/dashboard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'alerts', dashboardData }),
+        }),
+      ]);
+
+      if (insightsRes.ok) {
+        const data = await insightsRes.json();
+        setAiInsights(data.result);
+      }
+
+      if (recommendationsRes.ok) {
+        const data = await recommendationsRes.json();
+        setAiRecommendations(data.result);
+      }
+
+      if (alertsRes.ok) {
+        const data = await alertsRes.json();
+        setAiAlerts(data.result);
+      }
+
+      setAiLoaded(true);
+      toast.success('AI insights loaded successfully');
+    } catch (error) {
+      console.error('Failed to load AI insights:', error);
+      toast.error('Failed to load AI insights');
+    } finally {
+      setLoadingAI(false);
+    }
+  }, [stats, employees.length, todayShifts.length, shifts, pendingTimeOffCount, isAdmin, orgId]);
+
+  // Reset AI insights when org changes
+  React.useEffect(() => {
+    setAiInsights(null);
+    setAiRecommendations(null);
+    setAiAlerts(null);
+    setAiLoaded(false);
+  }, [orgId]);
+
   if (orgLoading || loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -251,64 +348,68 @@ export default function DashboardPage() {
         transition={{ delay: 0.1 }}
         className="bg-white/90 backdrop-blur-xl border border-slate-200 rounded-xl p-4 sm:p-6 shadow-lg"
       >
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <motion.h1
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-slate-800 via-blue-700 to-indigo-700 bg-clip-text text-transparent"
-            >
-              {getGreeting(userEmail?.split('@')[0])}
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-slate-600 mt-1 text-sm sm:text-base"
-            >
-              {isAdmin
-                ? "Manage your team's schedule and keep operations running smoothly."
-                : "Stay updated with your shifts and team schedule."}
-            </motion.p>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex-1 min-w-0">
+              <motion.h1
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-slate-800 via-blue-700 to-indigo-700 bg-clip-text text-transparent"
+              >
+                {getGreeting(userEmail?.split('@')[0])}
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-slate-600 mt-1 text-sm sm:text-base"
+              >
+                {isAdmin
+                  ? "Manage your team's schedule and keep operations running smoothly."
+                  : "Stay updated with your shifts and team schedule."}
+              </motion.p>
+            </div>
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="flex items-center gap-2 mt-3 flex-wrap"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5 }}
+              className="flex items-center gap-2 sm:gap-3"
             >
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-200 backdrop-blur-xl">
-                <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-emerald-700">Live data</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-slate-500">
-                <CheckCircle className="h-4 w-4 text-emerald-500" />
-                <span>Updated {format(lastUpdate, "h:mm a")}</span>
-              </div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  variant="outline"
+                  onClick={loadData}
+                  disabled={loading}
+                  className="rounded-xl border-slate-200/60 hover:bg-slate-50/80 hover:border-slate-300/60 transition-all duration-200"
+                >
+                  <motion.div
+                    animate={{ rotate: loading ? 360 : 0 }}
+                    transition={{ duration: 1, repeat: loading ? Infinity : 0, ease: "linear" }}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  </motion.div>
+                  <span className="hidden sm:inline">Refresh</span>
+                  <span className="sm:hidden">Sync</span>
+                </Button>
+              </motion.div>
             </motion.div>
           </div>
+
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.5 }}
-            className="flex items-center gap-3"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="flex items-center gap-2 sm:gap-3 flex-wrap"
           >
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                variant="outline"
-                onClick={loadData}
-                disabled={loading}
-                className="rounded-xl border-slate-200/60 hover:bg-slate-50/80 hover:border-slate-300/60 transition-all duration-200"
-              >
-                <motion.div
-                  animate={{ rotate: loading ? 360 : 0 }}
-                  transition={{ duration: 1, repeat: loading ? Infinity : 0, ease: "linear" }}
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                </motion.div>
-                Refresh
-              </Button>
-            </motion.div>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-200 backdrop-blur-xl">
+              <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse"></div>
+              <span className="text-xs sm:text-sm font-medium text-emerald-700">Live data</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-500">
+              <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-500" />
+              <span>Updated {format(lastUpdate, "h:mm a")}</span>
+            </div>
           </motion.div>
         </div>
       </motion.div>
@@ -487,6 +588,183 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* AI-Powered Analytics for Admins */}
+      {isAdmin && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <Card className="bg-white/95 border-slate-200 shadow-sm">
+            <CardHeader className="pb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <CardTitle className="flex items-center gap-2 text-slate-800 text-base">
+                  <Sparkles className="h-5 w-5 text-purple-600" />
+                  AI-Powered Analytics
+                </CardTitle>
+                <Button
+                  onClick={loadAIInsights}
+                  disabled={loadingAI || !stats.totalShifts}
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md"
+                  size="sm"
+                >
+                  {loadingAI ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : aiLoaded ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Refresh Insights
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="h-4 w-4 mr-2" />
+                      Generate AI Insights
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {!aiLoaded && !loadingAI ? (
+                <div className="text-center py-12 sm:py-16">
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <div className="inline-flex items-center justify-center h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 mb-4">
+                      <Sparkles className="h-8 w-8 sm:h-10 sm:w-10 text-purple-600" />
+                    </div>
+                    <h3 className="text-base sm:text-lg font-semibold text-slate-800 mb-2">
+                      Ready to Analyze Your Data
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto mb-4">
+                      Click "Generate AI Insights" to get personalized recommendations, alerts, and insights based on your organization's scheduling data.
+                    </p>
+                  </motion.div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
+                  {/* AI Insights */}
+                  <Card className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border-blue-200 shadow-md">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2 text-slate-800 text-sm sm:text-base">
+                          <Brain className="h-4 w-4 text-blue-600" />
+                          AI Insights
+                        </CardTitle>
+                        {loadingAI && <Loader2 className="h-4 w-4 animate-spin text-blue-600" />}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {loadingAI && !aiInsights ? (
+                        <div className="flex flex-col items-center justify-center py-6 sm:py-8">
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                          >
+                            <Brain className="h-8 w-8 text-blue-400 mb-2" />
+                          </motion.div>
+                          <p className="text-xs sm:text-sm text-slate-600">Analyzing your data...</p>
+                        </div>
+                      ) : aiInsights ? (
+                        <div className="prose prose-sm max-w-none">
+                          <div className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                            {aiInsights}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-6 sm:py-8">
+                          <Sparkles className="h-8 w-8 text-blue-400 mx-auto mb-2" />
+                          <p className="text-xs sm:text-sm text-slate-600">Loading insights...</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+          {/* AI Recommendations */}
+          <Card className="bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 border-emerald-200 shadow-md">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-slate-800 text-sm sm:text-base">
+                  <Lightbulb className="h-4 w-4 text-emerald-600" />
+                  Recommendations
+                </CardTitle>
+                {loadingAI && <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loadingAI && !aiRecommendations ? (
+                <div className="flex flex-col items-center justify-center py-6 sm:py-8">
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    <Lightbulb className="h-8 w-8 text-emerald-400 mb-2" />
+                  </motion.div>
+                  <p className="text-xs sm:text-sm text-slate-600">Generating recommendations...</p>
+                </div>
+              ) : aiRecommendations ? (
+                <div className="prose prose-sm max-w-none">
+                  <div className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                    {aiRecommendations}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-6 sm:py-8">
+                  <Lightbulb className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
+                  <p className="text-xs sm:text-sm text-slate-600">Recommendations will appear here</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+                  {/* AI Alerts */}
+                  <Card className="bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 border-amber-200 shadow-md">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2 text-slate-800 text-sm sm:text-base">
+                          <AlertCircle className="h-4 w-4 text-amber-600" />
+                          Alerts & Priorities
+                        </CardTitle>
+                        {loadingAI && <Loader2 className="h-4 w-4 animate-spin text-amber-600" />}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {loadingAI && !aiAlerts ? (
+                        <div className="flex flex-col items-center justify-center py-6 sm:py-8">
+                          <motion.div
+                            animate={{ rotate: [0, 10, -10, 0] }}
+                            transition={{ duration: 0.5, repeat: Infinity }}
+                          >
+                            <AlertCircle className="h-8 w-8 text-amber-400 mb-2" />
+                          </motion.div>
+                          <p className="text-xs sm:text-sm text-slate-600">Checking for issues...</p>
+                        </div>
+                      ) : aiAlerts ? (
+                        <div className="prose prose-sm max-w-none">
+                          <div className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                            {aiAlerts}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-6 sm:py-8">
+                          <CheckCircle className="h-8 w-8 text-green-400 mx-auto mb-2" />
+                          <p className="text-xs sm:text-sm text-slate-600">Loading alerts...</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
 
       {/* Main Content Grid */}
