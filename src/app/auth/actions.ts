@@ -15,9 +15,8 @@ export async function login(formData: FormData) {
 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
-    // Your /login page can read ?error= and show a Sonner toast
-   toast.error(error.message || "Login failed");
-    redirect("/auth/login");
+    // Redirect with error message in URL
+    redirect(`/auth/login?error=${encodeURIComponent(error.message)}`);
   }
   // Check memberships
   const { data: memberships, error: memErr } = await supabase

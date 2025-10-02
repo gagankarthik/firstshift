@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { login } from "../actions";
 import {
@@ -12,16 +13,25 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Eye, EyeOff, Shield, Lock } from "lucide-react";
 import Image from "next/image";
+import { toast } from "sonner";
 
-
-export default function LoginPage() {
+function LoginForm() {
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+
+    // Check for error in URL params
+    const error = searchParams.get('error');
+    if (error) {
+      toast.error(decodeURIComponent(error));
+      // Clean up URL
+      window.history.replaceState({}, '', '/auth/login');
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (formData: FormData) => {
     setIsLoading(true);
@@ -184,5 +194,17 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-500"></div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
