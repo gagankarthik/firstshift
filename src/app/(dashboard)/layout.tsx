@@ -76,8 +76,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
         {/* Enhanced Responsive Layout */}
         <div className="flex h-screen overflow-hidden relative z-10">
-          {/* Enhanced Sidebar - Desktop */}
-          <aside className="hidden lg:block w-64 xl:w-72 bg-white/95 border-r border-slate-200/80 backdrop-blur-xl flex-shrink-0 shadow-xl">
+          {/* Enhanced Sidebar - Desktop (Reduced width) */}
+          <aside className="hidden lg:block w-56 bg-white/95 border-r border-slate-200/80 backdrop-blur-xl flex-shrink-0 shadow-xl">
             <NoSSR>
               <Sidebar />
             </NoSSR>
@@ -92,15 +92,11 @@ export default async function DashboardLayout({ children }: { children: ReactNod
               </NoSSR>
             </header>
 
-            {/* Enhanced Main Content with better mobile spacing */}
+            {/* Enhanced Main Content - removed padding, let PageContainer handle it */}
             <main className="flex-1 overflow-y-auto bg-gradient-to-b from-transparent via-white/20 to-slate-50/40 scrollbar-hide">
-              <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8">
-                <div className="min-h-full space-y-4 sm:space-y-6 lg:space-y-8">
-                  <NoSSR showLoader>
-                    {children}
-                  </NoSSR>
-                </div>
-              </div>
+              <NoSSR showLoader>
+                {children}
+              </NoSSR>
 
               {/* Bottom padding for mobile navigation */}
               <div className="h-20 lg:h-0" />

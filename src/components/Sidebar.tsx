@@ -62,10 +62,10 @@ function NavItem({ href, label, icon: Icon, onClick }: {
         whileHover={{ scale: 1.02, x: 4 }}
         whileTap={{ scale: 0.98 }}
         className={cn(
-          "group flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 relative overflow-hidden",
+          "group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200 relative overflow-hidden",
           active
-            ? "bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-lg border border-blue-200"
-            : "text-slate-600 hover:bg-slate-50 hover:text-slate-800 backdrop-blur-sm"
+            ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg border border-transparent"
+            : "text-foreground/70 hover:bg-accent/80 hover:text-foreground backdrop-blur-sm hover:shadow-md"
         )}
       >
         {/* Animated background for active state */}
@@ -73,7 +73,7 @@ function NavItem({ href, label, icon: Icon, onClick }: {
           {active && (
             <motion.div
               layoutId="activeNavBg"
-              className="absolute inset-0 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl"
+              className="absolute inset-0 bg-gradient-to-r from-primary to-primary/90 rounded-xl"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -94,8 +94,8 @@ function NavItem({ href, label, icon: Icon, onClick }: {
               className={cn(
                 "h-5 w-5 transition-colors duration-300",
                 active
-                  ? "text-blue-600"
-                  : "text-slate-500 group-hover:text-blue-600"
+                  ? "text-primary-foreground"
+                  : "text-muted-foreground group-hover:text-primary"
               )}
             />
           </motion.div>
@@ -109,7 +109,7 @@ function NavItem({ href, label, icon: Icon, onClick }: {
 
         {/* Hover indicator */}
         <motion.div
-          className="absolute right-2 w-1 h-6 bg-gradient-to-b from-blue-500 to-indigo-500 rounded-full opacity-0 group-hover:opacity-100"
+          className="absolute right-2 w-1 h-6 bg-gradient-to-b from-primary to-secondary rounded-full opacity-0 group-hover:opacity-100"
           animate={{ opacity: active ? 1 : 0 }}
           transition={{ duration: 0.2 }}
         />
@@ -121,12 +121,12 @@ function NavItem({ href, label, icon: Icon, onClick }: {
 // ----------------- Sidebar Panel -----------------
 function SidebarPanel({ onItemClick }: { onItemClick?: () => void }) {
   return (
-    <div className="flex h-full w-full flex-col bg-white/95 backdrop-blur-xl overflow-hidden border-r border-slate-200">
+    <div className="flex h-full w-full flex-col bg-background/95 backdrop-blur-xl overflow-hidden border-r border-border/50">
       {/* Enhanced Brand Section - Fixed */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex-shrink-0 flex items-center px-4 py-5 border-b border-slate-200"
+        className="flex-shrink-0 flex items-center px-4 py-5 border-b border-border/50"
       >
         <Link href="/" className="flex items-center gap-3 group">
          <Image src="/logo.svg" alt="FirstShift Logo" width={120} height={28} className="rounded-full" />
@@ -143,8 +143,8 @@ function SidebarPanel({ onItemClick }: { onItemClick?: () => void }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.6 }}
             >
-              <h3 className="px-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-                <div className="h-0.5 w-4 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"></div>
+              <h3 className="px-2 text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2">
+                <div className="h-0.5 w-4 bg-gradient-to-r from-primary to-secondary rounded-full"></div>
                 Workspace
               </h3>
               <div className="space-y-0.5">
@@ -167,8 +167,8 @@ function SidebarPanel({ onItemClick }: { onItemClick?: () => void }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.6 }}
             >
-              <h3 className="px-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-                <div className="h-0.5 w-4 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"></div>
+              <h3 className="px-2 text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2">
+                <div className="h-0.5 w-4 bg-gradient-to-r from-chart-2 to-chart-3 rounded-full"></div>
                 General
               </h3>
               <div className="space-y-0.5">

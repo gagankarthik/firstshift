@@ -15,24 +15,63 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { EmployeeHelpButton } from "@/components/ui/help-button";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Select, SelectTrigger, SelectContent, SelectItem, SelectValue,
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel,
-  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
-  AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Loader2, MoreHorizontal, Plus, Search, Users, UserCheck, UserX,
-  Filter, Download, Eye, Edit, Trash2, Shield, Crown, User, FileText, Printer
+  Loader2,
+  MoreHorizontal,
+  Plus,
+  Search,
+  Users,
+  UserCheck,
+  UserX,
+  Filter,
+  Download,
+  Eye,
+  Edit,
+  Trash2,
+  Shield,
+  Crown,
+  User,
+  FileText,
+  Printer,
 } from "lucide-react";
+
+// Import layout components
+import { PageContainer } from "@/components/layout/PageContainer";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { Section } from "@/components/layout/Section";
+import { StatCard } from "@/components/layout/StatCard";
+import { EmptyState } from "@/components/layout/EmptyState";
 
 import AddEmployeeDialog from "@/components/employees/AddEmployeeDialog";
 
@@ -72,75 +111,14 @@ const getRoleIcon = (role: string | null) => {
 
 const getRoleBadgeColor = (role: string | null) => {
   switch (role) {
-    case 'admin':
+    case "admin":
       return "bg-amber-50 text-amber-700 border-amber-200";
-    case 'manager':
+    case "manager":
       return "bg-blue-50 text-blue-700 border-blue-200";
     default:
       return "bg-slate-50 text-slate-600 border-slate-200";
   }
 };
-
-/* ================== Stats Component ================== */
-const StatsCard = ({ title, value, subtitle, icon: Icon, color, trend }: {
-  title: string;
-  value: number | string;
-  subtitle: string;
-  icon: any;
-  color: string;
-  trend?: number;
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    whileHover={{ y: -2, scale: 1.02 }}
-    transition={{ duration: 0.2 }}
-  >
-    <Card className="bg-white/95 border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 relative overflow-hidden">
-      {/* Gradient overlay */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${color.includes('blue') ? 'from-blue-50/50 to-indigo-50/50' : color.includes('emerald') ? 'from-emerald-50/50 to-green-50/50' : 'from-purple-50/50 to-pink-50/50'} opacity-0 hover:opacity-100 transition-opacity duration-300`} />
-
-      <CardContent className="p-4 sm:p-6 relative z-10">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex-1">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{title}</p>
-            <motion.p
-              className={`text-2xl sm:text-3xl font-bold ${color} mt-2`}
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-            >
-              {value}
-            </motion.p>
-            <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
-          </div>
-          <motion.div
-            className={`p-3 rounded-xl bg-white/80 shadow-sm border border-slate-200/50 backdrop-blur-sm`}
-            whileHover={{ scale: 1.1, rotate: 5 }}
-            transition={{ type: "spring", stiffness: 400 }}
-          >
-            <Icon className={`h-5 w-5 ${color.replace('text-', 'text-')}`} />
-          </motion.div>
-        </div>
-        {trend && (
-          <motion.div
-            className="flex items-center text-xs bg-white/60 rounded-lg px-2 py-1 backdrop-blur-sm"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <span className={`font-medium ${
-              trend > 0 ? "text-emerald-600" : "text-red-600"
-            }`}>
-              {trend > 0 ? '↗' : '↘'} {Math.abs(trend)}%
-            </span>
-            <span className="text-slate-500 ml-2">vs last month</span>
-          </motion.div>
-        )}
-      </CardContent>
-    </Card>
-  </motion.div>
-);
 
 /* ================== Main Page Component ================== */
 
@@ -318,269 +296,158 @@ export default function EmployeesPage() {
   if (loading || !orgId) {
     return (
       <NoSSR showLoader>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center gap-4 text-slate-600"
-          >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            >
-              <Loader2 className="h-8 w-8 text-blue-600" />
-            </motion.div>
-            <div className="text-center">
-              <div className="text-lg font-semibold text-slate-800">Loading Employee Data</div>
-              <div className="text-sm text-slate-500 mt-1">Please wait while we fetch your team...</div>
+        <PageContainer maxWidth="xl">
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="flex items-center gap-3 text-muted-foreground">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span className="text-lg font-medium">Loading employees...</span>
             </div>
-          </motion.div>
-        </div>
+          </div>
+        </PageContainer>
       </NoSSR>
     );
   }
 
   return (
     <NoSSR>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="space-y-6 lg:space-y-8"
-      >
-        {/* Enhanced Page Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white/90 backdrop-blur-xl border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-sm"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex-1">
-              <motion.h1
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-                className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-slate-800 via-blue-700 to-indigo-700 bg-clip-text text-transparent"
-              >
-                Employee Management
-              </motion.h1>
-              <motion.p
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-slate-600 mt-2 text-sm sm:text-base"
-              >
-                Manage your team members, roles, and organizational structure
-              </motion.p>
-
-              {/* Live status indicator */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="flex items-center gap-3 mt-3"
-              >
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-200">
-                  <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium text-emerald-700">Live Data</span>
-                </div>
-                <div className="text-xs text-slate-500">
-                  Last updated: {format(lastUpdate, "h:mm a")}
-                </div>
-              </motion.div>
-            </div>
-
-            <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.4 }}
-              >
-                <EmployeeHelpButton />
-              </motion.div>
-
-              {canManage && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.5 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Button
-                    onClick={() => setOpenAdd(true)}
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 text-white font-semibold"
-                    size="lg"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Add Employee</span>
-                    <span className="sm:hidden">Add</span>
-                  </Button>
-                </motion.div>
-              )}
-            </div>
-          </div>
-        </motion.div>
-
-      {/* Statistics Cards */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
-      >
-        <StatsCard
-          title="Total Employees"
-          value={stats.total}
-          subtitle="All team members"
+      <PageContainer maxWidth="xl">
+        {/* Page Header */}
+        <PageHeader
           icon={Users}
-          color="text-blue-700"
-          trend={5}
+          title="Team Management"
+          description={`${stats.total} team members • ${stats.active} active`}
+          breadcrumbs={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Employees" },
+          ]}
+          actions={
+            <>
+              <EmployeeHelpButton />
+              {canManage && (
+                <Button onClick={() => setOpenAdd(true)} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  <span>Add Employee</span>
+                </Button>
+              )}
+            </>
+          }
         />
-        <StatsCard
-          title="Active Members"
-          value={stats.active}
-          subtitle="Currently working"
-          icon={UserCheck}
-          color="text-emerald-700"
-        />
-        <StatsCard
-          title="Inactive Members"
-          value={stats.inactive}
-          subtitle="Not currently active"
-          icon={UserX}
-          color="text-orange-700"
-        />
-        <StatsCard
-          title="Position Coverage"
-          value={`${stats.coverageRate}%`}
-          subtitle={`${stats.withPositions} assigned positions`}
-          icon={Shield}
-          color="text-purple-700"
-        />
-      </motion.div>
 
-        {/* Enhanced Filters and Controls */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-sm"
-        >
-          <div className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
-            {/* Search */}
-            <div className="relative flex-1 lg:max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+        {/* Statistics Cards */}
+        <Section spacing="lg" noPadding>
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <StatCard
+              title="Total Employees"
+              value={stats.total.toString()}
+              icon={Users}
+              trend={{ value: 5, label: "vs last month" }}
+              subtitle="All team members"
+              gradient="from-blue-500 to-indigo-600"
+              iconColor="text-blue-600"
+            />
+            <StatCard
+              title="Active Members"
+              value={stats.active.toString()}
+              icon={UserCheck}
+              subtitle="Currently working"
+              gradient="from-green-500 to-emerald-600"
+              iconColor="text-green-600"
+            />
+            <StatCard
+              title="Inactive Members"
+              value={stats.inactive.toString()}
+              icon={UserX}
+              subtitle="Not currently active"
+              gradient="from-orange-500 to-red-600"
+              iconColor="text-orange-600"
+            />
+            <StatCard
+              title="Position Coverage"
+              value={`${stats.coverageRate}%`}
+              icon={Shield}
+              subtitle={`${stats.withPositions} assigned`}
+              gradient="from-purple-500 to-pink-600"
+              iconColor="text-purple-600"
+            />
+          </div>
+        </Section>
+
+        {/* Filters and Search */}
+        <Section spacing="sm" noPadding>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search employees by name..."
+                placeholder="Search employees..."
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                className="pl-10 border-slate-300 focus:border-blue-500 focus:ring-blue-500/20 bg-white/50 h-11"
+                className="pl-10"
               />
-              {q && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
-                >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setQ("")}
-                    className="h-6 w-6 p-0 hover:bg-slate-100"
-                  >
-                    ×
-                  </Button>
-                </motion.div>
-              )}
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-3 lg:gap-4">
-              <div className="flex gap-3">
-                <Select value={posFilter} onValueChange={setPosFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px] border-slate-300 bg-white/50 h-11">
-                    <Filter className="h-4 w-4 mr-2 text-slate-500" />
-                    <SelectValue placeholder="All Positions" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Positions</SelectItem>
-                    {positions.map(pos => (
-                      <SelectItem key={pos.id} value={pos.id}>{pos.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <Select value={posFilter} onValueChange={setPosFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="All Positions" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Positions</SelectItem>
+                {positions.map((pos) => (
+                  <SelectItem key={pos.id} value={pos.id}>
+                    {pos.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-[140px] border-slate-300 bg-white/50 h-11">
-                    <SelectValue placeholder="All Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                        Active
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="inactive">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-                        Inactive
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-[140px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
 
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setViewMode(viewMode === 'table' ? 'grid' : 'table')}
-                  className="border-slate-300 bg-white/50 hover:bg-white hover:border-blue-300 transition-all duration-200 h-11"
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">
-                    {viewMode === 'table' ? 'Grid View' : 'Table View'}
-                  </span>
-                  <span className="sm:hidden">
-                    {viewMode === 'table' ? 'Grid' : 'Table'}
-                  </span>
+            <Button
+              variant="outline"
+              onClick={() => setViewMode(viewMode === "table" ? "grid" : "table")}
+              className="gap-2"
+            >
+              <Eye className="h-4 w-4" />
+              <span className="hidden sm:inline">
+                {viewMode === "table" ? "Grid" : "Table"}
+              </span>
+            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  <span className="hidden sm:inline">Export</span>
                 </Button>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="border-slate-300 bg-white/50 hover:bg-white h-11">
-                      <Download className="h-4 w-4 mr-2" />
-                      <span className="hidden sm:inline">Export</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem>
-                      <FileText className="h-4 w-4 mr-2" />
-                      Export as CSV
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Printer className="h-4 w-4 mr-2" />
-                      Print List
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Export CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Printer className="h-4 w-4 mr-2" />
+                  Print
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Results summary */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200"
-          >
-            <div className="text-sm text-slate-600">
-              Showing <span className="font-semibold text-slate-800">{filteredRows.length}</span> of{" "}
-              <span className="font-semibold text-slate-800">{rows.length}</span> employees
-            </div>
-            {(q || posFilter !== "all" || statusFilter !== "all") && (
+          {(q || posFilter !== "all" || statusFilter !== "all") && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                Showing <span className="font-semibold">{filteredRows.length}</span> of{" "}
+                <span className="font-semibold">{rows.length}</span> employees
+              </div>
               <Button
                 variant="ghost"
                 size="sm"
@@ -589,54 +456,37 @@ export default function EmployeesPage() {
                   setPosFilter("all");
                   setStatusFilter("all");
                 }}
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
               >
                 Clear filters
               </Button>
-            )}
-          </motion.div>
-        </motion.div>
+            </div>
+          )}
+        </Section>
 
-      {/* Employee List */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <Card className="bg-white/95 border-slate-200 shadow-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-slate-800">
-                <Users className="h-5 w-5" />
-                Team Members ({filteredRows.length})
-              </span>
-              {canManage && (
-                <Button variant="outline" size="sm" className="border-slate-300">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {filteredRows.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                <p className="text-lg font-medium text-slate-700 mb-2">No employees found</p>
-                <p className="text-slate-500">
-                  {q.trim() ? "Try adjusting your search terms" : "Add your first employee to get started"}
-                </p>
-                {canManage && !q.trim() && (
-                  <Button
-                    onClick={() => setOpenAdd(true)}
-                    className="mt-4 bg-gradient-to-r from-blue-600 to-indigo-600"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Employee
-                  </Button>
-                )}
-              </div>
-            ) : viewMode === 'table' ? (
+        {/* Employee List */}
+        <Section spacing="md" noPadding>
+          {filteredRows.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="No employees found"
+              description={
+                q.trim()
+                  ? "Try adjusting your search terms"
+                  : "Add your first employee to get started"
+              }
+              action={
+                canManage && !q.trim()
+                  ? {
+                      label: "Add Employee",
+                      onClick: () => setOpenAdd(true),
+                      icon: Plus,
+                    }
+                  : undefined
+              }
+            />
+          ) : viewMode === "table" ? (
+            <Card className="glass-card">
+              <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -748,8 +598,10 @@ export default function EmployeesPage() {
                   </TableBody>
                 </Table>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 <AnimatePresence>
                   {filteredRows.map((row, index) => (
                     <motion.div
@@ -829,42 +681,41 @@ export default function EmployeesPage() {
                   ))}
                 </AnimatePresence>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </motion.div>
+          )}
+        </Section>
 
-      {/* Add Employee Dialog */}
-      <AddEmployeeDialog
-        orgId={orgId!}
-        open={openAdd}
-        onOpenChange={setOpenAdd}
-      />
+        {/* Add Employee Dialog */}
+        <AddEmployeeDialog
+          orgId={orgId!}
+          open={openAdd}
+          onOpenChange={setOpenAdd}
+        />
 
-      {/* Confirmation Dialog */}
-      <AlertDialog open={!!confirmId} onOpenChange={() => setConfirmId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Deactivate Employee</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to deactivate <strong>{confirmName}</strong>?
-              They will no longer appear in active employee lists and cannot be assigned to shifts.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deactivateEmployee(confirmId!)}
-              disabled={busy}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Deactivate
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      </motion.div>
+        {/* Confirmation Dialog */}
+        <AlertDialog open={!!confirmId} onOpenChange={() => setConfirmId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Deactivate Employee</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to deactivate <strong>{confirmName}</strong>? They
+                will no longer appear in active employee lists and cannot be assigned to
+                shifts.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deactivateEmployee(confirmId!)}
+                disabled={busy}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Deactivate
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </PageContainer>
     </NoSSR>
   );
 }

@@ -7,7 +7,8 @@
       "mcp__ide__getDiagnostics",
       "Bash(node:*)",
       "Bash(npm install:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "WebFetch(domain:lp2.connecteam.com)"
     ],
     "deny": [],
     "ask": []

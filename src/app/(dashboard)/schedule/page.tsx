@@ -44,8 +44,19 @@ import {
   Filter,
   Loader2,
   Sparkles,
+  Calendar as CalendarIcon,
+  Send,
+  Repeat,
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
+
+// Import layout components
+import { PageContainer } from "@/components/layout/PageContainer";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { Section } from "@/components/layout/Section";
 
 // Import our modular components
 import { ShiftChip } from "@/components/schedule/ShiftChip";
@@ -892,187 +903,166 @@ export default function SchedulePage() {
   // Loading state
   if (loading || !orgId) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex items-center gap-3 text-slate-600">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span className="text-lg font-medium">Loading schedule...</span>
+      <PageContainer maxWidth="xl">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span className="text-lg font-medium">Loading schedule...</span>
+          </div>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
-      <div className="mx-auto px-3 sm:px-4 lg:px-6 py-4 lg:py-6 max-w-7xl">
-        {/* Modern Page Header */}
-        <div className="mb-6 lg:mb-8">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center shadow-md">
-                  <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-slate-800 via-blue-700 to-indigo-700 bg-clip-text text-transparent">
-                    Schedule Management
-                  </h1>
-                  <p className="text-sm text-slate-600 mt-0.5">
-                    {format(weekDays[0], "MMMM d")} - {format(weekDays[6], "MMMM d, yyyy")}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Enhanced Week Navigation */}
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setWeekStart(addDays(weekStart, -7))}
-                className="h-9 px-3 border-slate-300 hover:bg-slate-50 text-slate-700 shadow-sm transition-all duration-200 hover:shadow-md"
-              >
-                <ArrowLeft className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">Previous</span>
-              </Button>
-
-              <div className="flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-xl border border-slate-200 shadow-sm">
-                <div className="text-sm font-semibold text-slate-800">
-                  {format(weekDays[0], "MMM d")} - {format(weekDays[6], "MMM d")}
-                </div>
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setWeekStart(addDays(weekStart, +7))}
-                className="h-9 px-3 border-slate-300 hover:bg-slate-50 text-slate-700 shadow-sm transition-all duration-200 hover:shadow-md"
-              >
-                <span className="hidden sm:inline">Next</span>
-                <ArrowRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Enhanced Action Bar */}
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-slate-200/60 shadow-sm mb-6">
-          <div className="p-4 lg:p-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              {/* Search and Filter Section */}
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="relative">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                  <Input
-                    placeholder="Search employees..."
-                    className="pl-10 pr-4 h-10 w-full sm:w-80 bg-white/80 border-slate-300 rounded-xl focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200 shadow-sm"
-                    value={q}
-                    onChange={(e) => setQ(e.target.value)}
-                  />
-                </div>
-
-                <Button
-                  variant="outline"
-                  className="gap-2 h-10 px-4 bg-white/80 border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
-                >
-                  <Filter className="h-4 w-4" />
-                  <span>Filters</span>
-                </Button>
-              </div>
-
-              {/* Action Buttons Section */}
-              <div className="flex items-center gap-3">
+    <PageContainer maxWidth="xl">
+      {/* Page Header */}
+      <PageHeader
+        icon={CalendarIcon}
+        title="Schedule Management"
+        description={`${format(weekDays[0], "MMMM d")} - ${format(weekDays[6], "MMMM d, yyyy")}`}
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Schedule" },
+        ]}
+        actions={
+          <>
+            {canManage && (
+              <>
                 <Button
                   variant="outline"
                   onClick={() => setAiAssistantOpen(true)}
-                  className="gap-2 h-10 px-4 bg-gradient-to-r from-purple-50 to-pink-50 border-purple-300 hover:bg-purple-100 text-purple-700 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
+                  className="gap-2"
                 >
                   <Sparkles className="h-4 w-4" />
                   <span className="hidden sm:inline">AI Assistant</span>
                 </Button>
-
                 <Button
-                  variant="outline"
-                  onClick={() => setViewOpen(true)}
-                  className="gap-2 h-10 px-4 bg-white/80 border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
+                  onClick={() => {
+                    dlg.reset({});
+                    dlg.setOpen(true);
+                  }}
+                  className="gap-2"
                 >
-                  <Eye className="h-4 w-4" />
-                  <span className="hidden sm:inline">Schedule View</span>
+                  <Plus className="h-4 w-4" />
+                  <span>New Shift</span>
                 </Button>
+              </>
+            )}
+          </>
+        }
+      />
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="gap-2 h-10 px-4 bg-white/80 border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
-                    >
-                      <Download className="h-4 w-4" />
-                      <span className="hidden sm:inline">Export</span>
-                      <ChevronDown className="h-3 w-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="rounded-xl shadow-lg border-slate-200">
-                    <DropdownMenuItem onClick={() => setExportOpen(true)} className="gap-3 p-3 rounded-lg">
-                      <FileText className="h-4 w-4" />
-                      Export & Print Options
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setExportOpen(false);
-                        exportToCalendar();
-                      }}
-                      className="gap-3 p-3 rounded-lg"
-                    >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      Download Calendar Events
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                {canManage && (
-                  <Button
-                    onClick={() => {
-                      dlg.reset({});
-                      dlg.setOpen(true);
-                    }}
-                    className="gap-2 h-10 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>New Shift</span>
-                  </Button>
-                )}
+      {/* Week Navigation & Quick Stats */}
+      <Section spacing="sm" noPadding>
+        <div className="glass-card p-4 sm:p-6">
+          {/* Week Navigation */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setWeekStart(addDays(weekStart, -7))}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="px-4 py-2 glass-card text-sm font-semibold">
+                {format(weekDays[0], "MMM d")} - {format(weekDays[6], "MMM d, yyyy")}
               </div>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setWeekStart(addDays(weekStart, +7))}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
 
-            {/* Quick Stats Bar */}
-            <div className="mt-4 pt-4 border-t border-slate-200/60">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-3">
-                  <div className="text-lg font-bold text-blue-700">{employees.length}</div>
-                  <div className="text-xs text-slate-600 mt-1">Employees</div>
-                </div>
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-3">
-                  <div className="text-lg font-bold text-green-700">{shifts.length}</div>
-                  <div className="text-xs text-slate-600 mt-1">Total Shifts</div>
-                </div>
-                <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-3">
-                  <div className="text-lg font-bold text-orange-700">{shifts.filter(s => !s.employee_id).length}</div>
-                  <div className="text-xs text-slate-600 mt-1">Open Shifts</div>
-                </div>
-                <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-3">
-                  <div className="text-lg font-bold text-purple-700">{shifts.filter(s => s.status === 'completed').length}</div>
-                  <div className="text-xs text-slate-600 mt-1">Completed</div>
-                </div>
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setViewOpen(true)}
+                className="gap-2"
+              >
+                <Eye className="h-4 w-4" />
+                <span className="hidden sm:inline">View</span>
+              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Download className="h-4 w-4" />
+                    <span className="hidden sm:inline">Export</span>
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setExportOpen(true)} className="gap-2">
+                    <FileText className="h-4 w-4" />
+                    Export & Print
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setExportOpen(false);
+                      exportToCalendar();
+                    }}
+                    className="gap-2"
+                  >
+                    <CalendarIcon className="h-4 w-4" />
+                    Calendar Events
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <div className="glass-card p-4 text-center">
+              <div className="text-2xl font-bold text-foreground">{employees.length}</div>
+              <div className="text-xs text-muted-foreground mt-1">Employees</div>
+            </div>
+            <div className="glass-card p-4 text-center">
+              <div className="text-2xl font-bold text-green-600">{shifts.length}</div>
+              <div className="text-xs text-muted-foreground mt-1">Total Shifts</div>
+            </div>
+            <div className="glass-card p-4 text-center">
+              <div className="text-2xl font-bold text-orange-600">
+                {shifts.filter((s) => !s.employee_id).length}
               </div>
+              <div className="text-xs text-muted-foreground mt-1">Open Shifts</div>
+            </div>
+            <div className="glass-card p-4 text-center">
+              <div className="text-2xl font-bold text-purple-600">
+                {shifts.filter((s) => s.status === "completed").length}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">Completed</div>
             </div>
           </div>
         </div>
-        
+      </Section>
 
-        {/* Main Schedule Grid with Drag & Drop */}
+      {/* Search Bar */}
+      <Section spacing="sm" noPadding>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search employees..."
+              className="pl-10"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+          </div>
+          <Button variant="outline" className="gap-2">
+            <Filter className="h-4 w-4" />
+            <span>Filters</span>
+          </Button>
+        </div>
+      </Section>
+      {/* Main Schedule Grid with Drag & Drop */}
+      <Section spacing="md" noPadding>
         <DndContext
           sensors={sensors}
           collisionDetection={rectIntersection}
@@ -1102,98 +1092,99 @@ export default function SchedulePage() {
             {activeId ? <ShiftChip s={findShift(activeId)!} ghost /> : null}
           </DragOverlay>
         </DndContext>
+      </Section>
 
-        {/* Schedule View Dialog */}
-        <ScheduleViewDialog
-          open={viewOpen}
-          onOpenChange={setViewOpen}
-          shifts={shifts}
-          employees={employees}
-          weekDays={weekDays}
-          shiftsByEmpDay={shiftsByEmpDay}
-          timeOffByEmp={timeOffByEmp}
-          availabilityByEmp={availabilityByEmp}
-          timeOffLabelFor={timeOffLabelFor}
-        />
+      {/* Schedule View Dialog */}
+      <ScheduleViewDialog
+        open={viewOpen}
+        onOpenChange={setViewOpen}
+        shifts={shifts}
+        employees={employees}
+        weekDays={weekDays}
+        shiftsByEmpDay={shiftsByEmpDay}
+        timeOffByEmp={timeOffByEmp}
+        availabilityByEmp={availabilityByEmp}
+        timeOffLabelFor={timeOffLabelFor}
+      />
 
-        {/* Shift Create/Edit Dialog */}
-        <ShiftDialog
-          open={dlg.state.open}
-          onOpenChange={dlg.setOpen}
-          mode={dlg.state.mode}
-          shiftId={dlg.state.shiftId}
-          employeeId={dlg.state.employeeId}
-          date={dlg.state.date}
-          start={dlg.state.start}
-          end={dlg.state.end}
-          positionId={dlg.state.positionId}
-          locationId={dlg.state.locationId}
-          breakMin={dlg.state.breakMin}
-          saving={dlg.state.saving}
-          employees={employees}
-          positions={positions}
-          locations={locations}
-          onEmployeeChange={dlg.setEmployeeId}
-          onDateChange={dlg.setDate}
-          onStartChange={dlg.onStartChange}
-          onEndChange={(time: any) => {
-            dlg.setEnd(time);
-            dlg.setAutoEnd(false);
-          }}
-          onPositionChange={dlg.setPositionId}
-          onLocationChange={dlg.setLocationId}
-          onBreakChange={dlg.setBreakMin}
-          onSave={dlg.state.mode === "create" ? createShift : updateShift}
-          onDelete={dlg.state.mode === "edit" ? deleteShift : undefined}
-        />
+      {/* Shift Create/Edit Dialog */}
+      <ShiftDialog
+        open={dlg.state.open}
+        onOpenChange={dlg.setOpen}
+        mode={dlg.state.mode}
+        shiftId={dlg.state.shiftId}
+        employeeId={dlg.state.employeeId}
+        date={dlg.state.date}
+        start={dlg.state.start}
+        end={dlg.state.end}
+        positionId={dlg.state.positionId}
+        locationId={dlg.state.locationId}
+        breakMin={dlg.state.breakMin}
+        saving={dlg.state.saving}
+        employees={employees}
+        positions={positions}
+        locations={locations}
+        onEmployeeChange={dlg.setEmployeeId}
+        onDateChange={dlg.setDate}
+        onStartChange={dlg.onStartChange}
+        onEndChange={(time: any) => {
+          dlg.setEnd(time);
+          dlg.setAutoEnd(false);
+        }}
+        onPositionChange={dlg.setPositionId}
+        onLocationChange={dlg.setLocationId}
+        onBreakChange={dlg.setBreakMin}
+        onSave={dlg.state.mode === "create" ? createShift : updateShift}
+        onDelete={dlg.state.mode === "edit" ? deleteShift : undefined}
+      />
 
-        {/* Enhanced Export Dialog */}
-        <ExportDialog
-          open={exportOpen}
-          onOpenChange={setExportOpen}
-          exportStart={exportStart}
-          exportEnd={exportEnd}
-          weekDays={weekDays}
-          employees={employees}
-          onStartChange={setExportStart}
-          onEndChange={setExportEnd}
-          onExport={exportCSV}
-          onPrint={openPrintPreview}
-          onCalendarExport={exportToCalendar}
-          getShiftsForEmployeeAndDay={getShiftsForEmployeeAndDay}
-          timeOffLabelFor={timeOffLabelFor}
-        />
+      {/* Enhanced Export Dialog */}
+      <ExportDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        exportStart={exportStart}
+        exportEnd={exportEnd}
+        weekDays={weekDays}
+        employees={employees}
+        onStartChange={setExportStart}
+        onEndChange={setExportEnd}
+        onExport={exportCSV}
+        onPrint={openPrintPreview}
+        onCalendarExport={exportToCalendar}
+        getShiftsForEmployeeAndDay={getShiftsForEmployeeAndDay}
+        timeOffLabelFor={timeOffLabelFor}
+      />
 
-        {/* AI Assistant Dialog */}
-        <AIAssistantDialog
-          open={aiAssistantOpen}
-          onOpenChange={setAiAssistantOpen}
-          scheduleData={{
-            employees: employees.map((emp) => ({
-              id: emp.id,
-              name: emp.full_name,
-              position: emp.position?.name,
-              availability: availabilityByEmp.get(emp.id) || [],
-              timeOff: timeOffByEmp.get(emp.id) || [],
-            })),
-            shifts: shifts.map((shift) => ({
-              id: shift.id,
-              employee_id: shift.employee_id || "",
-              position: shift.position?.name,
-              location: locations.find((l) => l.id === shift.location_id)?.name,
-              starts_at: shift.starts_at,
-              ends_at: shift.ends_at,
-              status: shift.status,
-            })),
-            dateRange: {
-              start: yyyyMmDd(weekDays[0] || new Date()),
-              end: yyyyMmDd(weekDays[6] || new Date()),
-            },
-          }}
-        />
+      {/* AI Assistant Dialog */}
+      <AIAssistantDialog
+        open={aiAssistantOpen}
+        onOpenChange={setAiAssistantOpen}
+        scheduleData={{
+          employees: employees.map((emp) => ({
+            id: emp.id,
+            name: emp.full_name,
+            position: emp.position?.name,
+            availability: availabilityByEmp.get(emp.id) || [],
+            timeOff: timeOffByEmp.get(emp.id) || [],
+          })),
+          shifts: shifts.map((shift) => ({
+            id: shift.id,
+            employee_id: shift.employee_id || "",
+            position: shift.position?.name,
+            location: locations.find((l) => l.id === shift.location_id)?.name,
+            starts_at: shift.starts_at,
+            ends_at: shift.ends_at,
+            status: shift.status,
+          })),
+          dateRange: {
+            start: yyyyMmDd(weekDays[0] || new Date()),
+            end: yyyyMmDd(weekDays[6] || new Date()),
+          },
+        }}
+      />
 
-        {/* Enhanced Print View (Hidden) */}
-        <div className={`print-only ${printMode ? "block" : "hidden"} bg-white`}>
+      {/* Enhanced Print View (Hidden) */}
+      <div className={`print-only ${printMode ? "block" : "hidden"} bg-white`}>
           <div className="p-6">
             {/* Professional Print Header */}
             <div className="mb-8 text-center border-b-2 border-slate-300 pb-6">
@@ -1371,9 +1362,8 @@ export default function SchedulePage() {
           }
         `}</style>
 
-        {/* Override Confirmation Dialog */}
-        {overrideConfirm.element}
-      </div>
-    </div>
+      {/* Override Confirmation Dialog */}
+      {overrideConfirm.element}
+    </PageContainer>
   );
 }

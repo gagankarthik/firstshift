@@ -69,9 +69,9 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black flex items-center justify-center p-4 relative">
-      {/* Simple background pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none" />
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4 relative">
+      {/* Modern background pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#5E58FF08_1px,transparent_1px),linear-gradient(to_bottom,#5E58FF08_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none" />
 
       <div className="w-full max-w-md relative z-10">
         {/* Logo */}
@@ -82,19 +82,19 @@ export default function SignupPage() {
         </div>
 
         {/* Main Card */}
-        <Card className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl">
+        <Card className="bg-white/80 backdrop-blur-xl border border-primary/20 shadow-2xl shadow-primary/10">
           <CardHeader className="space-y-4 pb-6">
             <div className="flex items-center justify-center mb-2">
-              <div className="inline-flex items-center space-x-2 bg-green-500/10 border border-green-500/20 rounded-full px-4 py-2">
-                <Sparkles className="w-4 h-4 text-green-400" />
-                <span className="text-sm font-medium text-green-300">Start Free</span>
+              <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 rounded-full px-4 py-2 shadow-sm">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span className="text-sm font-semibold text-primary">Start Free</span>
               </div>
             </div>
 
-            <CardTitle className="text-2xl font-bold text-center text-white">
+            <CardTitle className="text-3xl font-bold text-center bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               Create your account
             </CardTitle>
-            <CardDescription className="text-center text-gray-300">
+            <CardDescription className="text-center text-foreground/70">
               Join thousands of teams transforming their workforce management
             </CardDescription>
           </CardHeader>
@@ -103,7 +103,7 @@ export default function SignupPage() {
             <form action={handleSubmit} className="space-y-6">
               {/* Full Name Field */}
               <div className="space-y-2">
-                <Label htmlFor="full_name" className="text-sm font-medium text-gray-200">
+                <Label htmlFor="full_name" className="text-sm font-semibold text-foreground">
                   Full Name
                 </Label>
                 <div className="relative">
@@ -112,16 +112,16 @@ export default function SignupPage() {
                     name="full_name"
                     type="text"
                     placeholder="Taylor Jenkins"
-                    className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:bg-white/10 focus:border-blue-400/50 focus:ring-blue-400/25 transition-all duration-200 pl-11 h-12"
+                    className="pl-11 h-12"
                     required
                   />
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 </div>
               </div>
 
               {/* Email Field */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-gray-200">
+                <Label htmlFor="email" className="text-sm font-semibold text-foreground">
                   Email Address
                 </Label>
                 <div className="relative">
@@ -130,10 +130,10 @@ export default function SignupPage() {
                     name="email"
                     type="email"
                     placeholder="you@company.com"
-                    className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:bg-white/10 focus:border-blue-400/50 focus:ring-blue-400/25 transition-all duration-200 pl-11 h-12"
+                    className="pl-11 h-12"
                     required
                   />
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 </div>
               </div>
 
@@ -141,7 +141,7 @@ export default function SignupPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 {/* Password Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium text-gray-200">
+                  <Label htmlFor="password" className="text-sm font-semibold text-foreground">
                     Password
                   </Label>
                   <div className="relative">
@@ -151,14 +151,14 @@ export default function SignupPage() {
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:bg-white/10 focus:border-blue-400/50 focus:ring-blue-400/25 transition-all duration-200 pr-10 h-12"
+                      className="pr-10 h-12"
                       minLength={8}
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {showPassword ? (
                         <EyeOff className="w-5 h-5" />
@@ -199,7 +199,7 @@ export default function SignupPage() {
 
                 {/* Confirm Password Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="confirm" className="text-sm font-medium text-gray-200">
+                  <Label htmlFor="confirm" className="text-sm font-semibold text-foreground">
                     Confirm Password
                   </Label>
                   <div className="relative">
@@ -209,14 +209,14 @@ export default function SignupPage() {
                       type={showConfirmPassword ? "text" : "password"}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:bg-white/10 focus:border-blue-400/50 focus:ring-blue-400/25 transition-all duration-200 pr-10 h-12"
+                      className="pr-10 h-12"
                       minLength={8}
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {showConfirmPassword ? (
                         <EyeOff className="w-5 h-5" />
@@ -249,8 +249,9 @@ export default function SignupPage() {
               <div className="pt-2">
                 <Button
                   type="submit"
+                  size="lg"
                   disabled={isLoading || !passwordsMatch || passwordStrength.strength < 3}
-                  className="w-full h-12 bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <div className="flex items-center space-x-2">
@@ -270,25 +271,25 @@ export default function SignupPage() {
             {/* Divider */}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-white/20" />
+                <span className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-transparent px-2 text-gray-400">Already have an account?</span>
+                <span className="bg-white px-2 text-muted-foreground font-semibold">Already have an account?</span>
               </div>
             </div>
 
             {/* Sign in link */}
             <div className="text-center">
               <Link href="/auth/login">
-                <button className="w-full h-12 bg-white/5 hover:bg-white/10 border border-white/20 hover:border-white/30 text-white font-medium rounded-xl transition-all duration-300 flex items-center justify-center space-x-2">
-                  <Lock className="w-4 h-4 text-blue-400" />
+                <Button variant="outline" size="lg" className="w-full">
+                  <Lock className="w-4 h-4 text-primary" />
                   <span>Sign in to your account</span>
-                </button>
+                </Button>
               </Link>
             </div>
 
             {/* Trust indicators */}
-            <div className="flex items-center justify-center space-x-4 pt-4 text-xs text-gray-400">
+            <div className="flex items-center justify-center space-x-4 pt-4 text-xs text-muted-foreground">
               <div className="flex items-center space-x-1">
                 <Lock className="w-3 h-3" />
                 <span>SSL Secure</span>
@@ -302,7 +303,7 @@ export default function SignupPage() {
         </Card>
 
         {/* Footer */}
-        <div className="text-center mt-8 text-sm text-gray-400">
+        <div className="text-center mt-8 text-sm text-muted-foreground">
           <p>© 2025 FirstShift. All rights reserved.</p>
         </div>
       </div>
